@@ -1,6 +1,6 @@
 #include "WLGDEventAction.hh"
 #include "WLGDTrajectory.hh"
-#include "g4root.hh"
+#include "G4AnalysisManager.hh"
 
 #include "G4Event.hh"
 #include "G4HCofThisEvent.hh"

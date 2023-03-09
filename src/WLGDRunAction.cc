@@ -1,9 +1,9 @@
 #include "WLGDRunAction.hh"
 #include "WLGDEventAction.hh"
-#include "g4root.hh"
+#include "G4AnalysisManager.hh"
 
 #include "G4Run.hh"
-#include "G4RunManager.hh"
+#include "G4AnalysisManager.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4UnitsTable.hh"
 #include <fstream>
@@ -19,7 +19,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
 
   // Create analysis manager
   auto analysisManager = G4AnalysisManager::Instance();
-
+  analysisManager->SetDefaultFileType("root");
   // Create directories
   analysisManager->SetVerboseLevel(1);
   analysisManager->SetNtupleMerging(false);
@@ -303,7 +303,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->FinishNtuple();
 }
 
-WLGDRunAction::~WLGDRunAction() { delete G4AnalysisManager::Instance(); }
+WLGDRunAction::~WLGDRunAction() {/* delete G4AnalysisManager::Instance();*/ }
 
 void WLGDRunAction::BeginOfRunAction(const G4Run* /*run*/)
 {
@@ -341,8 +341,7 @@ void WLGDRunAction::EndOfRunAction(const G4Run* /*run*/)
 
   // save ntuple
   analysisManager->Write();
-  analysisManager->CloseFile();
-
+  analysisManager->CloseFile(false);
   // Edit: 2021/03/12 by Moritz Neuberger
   // Adding output for number of neutrons crossing the detectors and total produced in LAr
   if(fWriteOutGeneralNeutronInfo == 1)
@@ -356,9 +355,9 @@ void WLGDRunAction::EndOfRunAction(const G4Run* /*run*/)
 
   // Edit: 2021/03/12 by Moritz Neuberger
   // Adding detail output for neutron production information
-  G4cout << "N of neutrons total: " << vector_x_dir.size() << G4endl;
   if(fWriteOutNeutronProductionInfo == 1)
   {
+    G4cout << "N of neutrons total: " << vector_x_dir.size() << G4endl;
     for(int i = 0; i < vector_x_dir.size(); i++)
     {
       outputStream_2 << vector_eventNumber[i] << " " << vector_x_dir[i] << " "
