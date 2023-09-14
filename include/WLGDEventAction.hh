@@ -31,6 +31,7 @@ public:
 
   // to create columns for Ntuple
   std::vector<G4int>&    GetNGe77() { return nGe77; }
+  std::vector<G4int>&    GetEvntID() { return evntID; }
   std::vector<G4int>&    GetHitTID() { return htrid; }
   std::vector<G4double>& GetHitEdep() { return edep; }
   std::vector<G4double>& GetHitEkin() { return ekin; }
@@ -131,6 +132,14 @@ public:
   std::vector<G4int>& GetIndividualEnergyDeposition_ID()
   {
     return IndividualEnergyDeposition_ID;
+  }
+  std::vector<G4int>& GetIndividualEnergyDeposition_ParentID()
+  {
+    return IndividualEnergyDeposition_ParentID;
+  }
+  std::vector<G4int>& GetIndividualEnergyDeposition_VolumeNumber()
+  {
+    return IndividualEnergyDeposition_VolumeNumber;
   }
   std::vector<G4int>& GetIndividualEnergyDeposition_Type()
   {
@@ -426,6 +435,14 @@ public:
   {
     IndividualEnergyDeposition_ID.push_back(n);
   }
+  void AddIndividualEnergyDeposition_ParentID(G4int n)
+  {
+    IndividualEnergyDeposition_ParentID.push_back(n);
+  }
+  void AddIndividualEnergyDeposition_VolumeNumber(G4int n)
+  {
+    IndividualEnergyDeposition_VolumeNumber.push_back(n);
+  }
   void AddIndividualEnergyDeposition_Type(G4int n)
   {
     IndividualEnergyDeposition_Type.push_back(n);
@@ -614,6 +631,7 @@ private:
 
   // - variables concerning the Ge77 production
   std::vector<G4int>    nGe77;
+  std::vector<G4int>    evntID;
   G4int                 fHID = -1;
   std::vector<G4int>    htrid;
   std::vector<G4int>    ReentranceTube;
@@ -698,12 +716,14 @@ private:
 
   // - output of the total energy deposited in the different time frames (prompt < 10µs, delayed > 10µs and <1mus, after delayed > 1ms)
   std::vector<G4double> TotalEnergyDepositionInLAr_prompt;
-  std::vector<G4double> TotalEnergyDepositionInGe_prompt;
   std::vector<G4double> TotalEnergyDepositionInLAr_delayed;
-  std::vector<G4double> TotalEnergyDepositionInGe_delayed;
+
   std::vector<G4double> TotalEnergyDepositionInLAr_delayed_long;
-  std::vector<G4double> TotalEnergyDepositionInGe_delayed_long;
   std::vector<G4double> TotalEnergyDepositionInLAr_after_delayed;
+
+  std::vector<G4double> TotalEnergyDepositionInGe_prompt;
+  std::vector<G4double> TotalEnergyDepositionInGe_delayed;
+  std::vector<G4double> TotalEnergyDepositionInGe_delayed_long;
   std::vector<G4double> TotalEnergyDepositionInGe_after_delayed;
 
   // - all energy depositions in the cryostat (should only be put out for small number of events (<10000))
@@ -715,6 +735,8 @@ private:
   std::vector<G4int>    IndividualEnergyDeposition_ReentranceTube;
   std::vector<G4int>    IndividualEnergyDeposition_LArOrGe;
   std::vector<G4int>    IndividualEnergyDeposition_ID;
+  std::vector<G4int>    IndividualEnergyDeposition_ParentID;
+  std::vector<G4int> IndividualEnergyDeposition_VolumeNumber;
   std::vector<G4int>    IndividualEnergyDeposition_Type;
   std::vector<G4int>    IndividualEnergyDeposition_DetectorNumber;
 

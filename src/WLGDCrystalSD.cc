@@ -52,6 +52,12 @@ G4bool WLGDCrystalSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
   if(!(iZ == 32 && iA == 77))
     return false;
 
+  if(std::find(fListOfGe77IDs.begin(), fListOfGe77IDs.end(), aStep->GetTrack()->GetParentID()) != fListOfGe77IDs.end())
+    return false;
+  
+  fListOfGe77IDs.push_back(aStep->GetTrack()->GetTrackID());
+
+
   WLGDCrystalHit* newHit = new WLGDCrystalHit();
 
   newHit->SetTID(aStep->GetTrack()->GetTrackID());
@@ -59,6 +65,7 @@ G4bool WLGDCrystalSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
   newHit->SetWeight(aStep->GetTrack()->GetWeight());
   newHit->SetEdep(edep);
   newHit->SetPos(aStep->GetPostStepPoint()->GetPosition());
+  newHit->SetExcitedState(aStep->GetTrack()->GetDefinition()->GetPDGEncoding()%10);
 
   // -- added the output for the re-entrance tube and the detector number 
   G4double tmp_x = aStep->GetTrack()->GetPosition().getX();
@@ -86,11 +93,23 @@ G4bool WLGDCrystalSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
       whichReentranceTube * 96);
   fHitsCollection->insert(newHit);
 
+  G4Track* nonConstTrack = const_cast<G4Track*>(aStep->GetTrack());
+  //nonConstTrack->SetKineticEnergy(0);
+  nonConstTrack->SetTrackStatus(fStopAndKill);
+
+  const auto secondaries = aStep->GetSecondaryInCurrentStep();
+  for (const auto& secondary : *secondaries) {
+      G4Track* nonConstTrack = const_cast<G4Track*>(secondary);
+      //nonConstTrack->SetKineticEnergy(0);
+      nonConstTrack->SetTrackStatus(fStopAndKill);
+  }
+
   return true;
 }
 
 void WLGDCrystalSD::EndOfEvent(G4HCofThisEvent*)
 {
+  fListOfGe77IDs.clear();
   if(verboseLevel > 1)
   {
     G4int nofHits = fHitsCollection->entries();

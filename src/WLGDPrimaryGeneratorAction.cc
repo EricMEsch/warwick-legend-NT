@@ -1,5 +1,6 @@
 // us
 #include "WLGDPrimaryGeneratorAction.hh"
+#include "WLGDPetersGammaCascadeReader.hh"
 #include "WLGDDetectorConstruction.hh"
 
 // geant
@@ -21,6 +22,86 @@
 
 // G4String WLGDPrimaryGeneratorAction::fFileName;
 // std::ifstream* WLGDPrimaryGeneratorAction::fInputFile;
+
+vector<int> WLGDPrimaryGeneratorAction::WLGD_get_coord_from_index(int index) {
+    int n = 0;
+    for (int i = -4; i <= 4; i++) {
+        for (int j = 0; j <= std::min(4, 4 - i); j++) {
+            if ((abs(i) == 3 || i == 0) && (j == 0 || j == 3)) {
+                continue;
+            }
+            for (int k = 0; k < 7; k++) {
+                if (n == index) {
+                  std::vector<int> output{ i, j, -(i + j), k }; 
+                  return output;
+                } 
+                n++;
+            }
+        }
+        for (int j = 1; j <= std::min(4, 4 - i); j++) {
+            if ((abs(i) == 3 || i == 0) && (j == 0 || j == 3)) {
+                continue;
+            }
+            for (int k = 0; k < 7; k++) {
+                if (n == index) {
+                  std::vector<int> output{ i, j, -(i + j), k }; 
+                  return output;
+                } 
+                n++;
+            }
+        }
+    }
+    std::vector<int> output{ 0,0,0 }; 
+    return output;
+}
+
+vector<double> WLGDPrimaryGeneratorAction::WLGD_get_carthesian_coordinates(int index){
+  vector<int> p = WLGD_get_coord_from_index(index);
+
+  double offset = -20 * cm;
+  double length = 16.75 * cm;
+  double vec_main_x = 1./2.;
+  double vec_main_y = std::sqrt(1. - vec_main_x*vec_main_x);
+  double vec_left_x = -1./2.;
+  double vec_left_y = std::sqrt(1. - vec_left_x*vec_left_x);
+  double vec_right_x = 1;
+  double vec_right_y = 0;
+  int nofLayers = 7;
+  double gehheight = 5.0 * cm;
+  double gegap = 3.0 * cm;
+  double layerthickness = gegap + 2 * gehheight;
+  double step = (gehheight + gegap / 2);
+
+  std::vector<double> output(3, 0.);
+  if (p[1] >= 0) {
+      output[0] = length * ( vec_main_x * p[0] + vec_left_x * p[1]);
+      output[1] = length * ( vec_main_y * p[0] + vec_left_y * p[1]);
+      output[2] = offset - p[3] * layerthickness;
+  }
+  if (p[1] < 0) {
+      output[0] = length * ( vec_main_x * p[0] - vec_right_x * p[1]);
+      output[1] = length * ( vec_main_y * p[0] - vec_right_y * p[1]);
+      output[2] = offset - p[3] * layerthickness;
+  }
+  return output;
+}
+
+vector<double> WLGDPrimaryGeneratorAction::WLGD_generate_random_position_in_detectors(){
+  double gehheight = 5.0 * cm;
+  double gerad     = 4.0 * cm; 
+  std::uniform_real_distribution<>   rndm(0.0, 1.0);  
+  double z = gehheight * (1. - 2. * rndm(generator));
+  double r = gerad * rndm(generator);
+  double phi = CLHEP::twopi * rndm(generator);
+
+  double x = r * std::cos(phi);
+  double y = r * std::sin(phi);
+
+  vector<double> output{x,y,z};
+  return output;
+}
+
+
 
 WLGDPrimaryGeneratorAction::WLGDPrimaryGeneratorAction(WLGDDetectorConstruction* det)
 : G4VUserPrimaryGeneratorAction()
@@ -255,7 +336,7 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 
     fParticleGun->GeneratePrimaryVertex(event);
   }
-  if(fGenerator == "Ge77m" || fGenerator == "Ge77andGe77m")
+  if(fGenerator == "Ge77m" || fGenerator == "Ge77andGe77m" || fGenerator == "GammaCascade")
   {
     G4double cushift        = 150.;
     G4double roiradius      = 30.0;  // string radius curad - Ge radius - gap
@@ -277,7 +358,7 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     G4int    z_number            = detectorNumber % nofLayers;
     G4int    string_number = (detectorNumber % (nofLayers * nofStrings)) / nofLayers;
     G4double radius        = gerad * cm * rndm(generator);
-    G4double ṕhi           = CLHEP::twopi * rndm(generator);
+    //G4double phi           = CLHEP::twopi * rndm(generator);
 
     double offset_x, offset_y;
     if(whichReentranceTube == 0)
@@ -305,13 +386,32 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     G4double energy        = 0 * GeV;
     G4double theta         = 0 * rad;
     G4double phi           = 0 * rad;
+
+/*
     G4double x =
-      radius * cos(ṕhi) + roiradius * cm * std::cos(string_number * angle) + offset_x;
+      radius * cos(phi) + roiradius * cm * std::cos(string_number * angle) + offset_x;
     G4double y =
-      radius * sin(ṕhi) + roiradius * cm * std::sin(string_number * angle) + offset_y;
-    G4double z = cushift * cm - step +
+      radius * sin(phi) + roiradius * cm * std::sin(string_number * angle) + offset_y;
+    */
+    double vec_main_x = 1/2.;
+    double vec_main_y = sqrt(1 - vec_main_x*vec_main_x);
+    double vec_left_x = -1/2.;
+    double vec_left_y = sqrt(1 - vec_left_x*vec_left_x);
+    double vec_right_x = 1;
+    double vec_right_y = 0;
+
+    std::uniform_int_distribution<>   rndm_detector_index(0,378);
+
+    vector<double> coor = WLGD_get_carthesian_coordinates(rndm_detector_index(generator));
+    vector<double> pos_in_det = WLGD_generate_random_position_in_detectors();
+
+    G4double x = coor[0] + pos_in_det[0];
+    G4double y = coor[1] + pos_in_det[1];
+    G4double z = coor[2] + pos_in_det[2];
+    
+ /*   cushift * cm - step +
                  (nofLayers / 2 * layerthickness - z_number * layerthickness) * cm +
-                 gehheight * cm * (1 - 2 * rndm(generator));
+                 gehheight * cm * (1 - 2 * rndm(generator));*/
 
     //   G4cout << "Primary coordinates: " << position/m << " m" << G4endl;
     //   G4cout << "Primary coordinates: " << x/cm << " " <<  y/cm << " " << z/cm << " "
@@ -320,43 +420,65 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 
     G4ParticleTable* theParticleTable = G4ParticleTable::GetParticleTable();
     G4double         theMass = theParticleTable->GetIonTable()->GetIonMass(32, 77, 0, 1);
-    if(fGenerator == "Ge77andGe77m")
+
+    if(fGenerator != "GammaCascade")
     {
-      std::uniform_int_distribution<int> distribution_2(0, 1);
-      G4int                              whichGe77State = distribution_2(generator);
-      if(whichGe77State == 0)
+      if(fGenerator == "Ge77andGe77m")
       {
-        fParticleGun->SetParticleDefinition(
-          theParticleTable->GetIonTable()->GetIon(32, 77, 0 * keV));
-        theMass = theParticleTable->GetIonTable()->GetIonMass(32, 77, 0, 0);
+        std::uniform_int_distribution<int> distribution_2(0, 1);
+        G4int                              whichGe77State = distribution_2(generator);
+        if(whichGe77State == 0)
+        {
+          fParticleGun->SetParticleDefinition(
+            theParticleTable->GetIonTable()->GetIon(32, 77, 0 * keV));
+          theMass = theParticleTable->GetIonTable()->GetIonMass(32, 77, 0, 0);
+        }
+        else
+        {
+          fParticleGun->SetParticleDefinition(
+            theParticleTable->GetIonTable()->GetIon(32, 77, 159.71 * keV));
+          theMass = theParticleTable->GetIonTable()->GetIonMass(32, 77, 0, 1);
+        }
       }
-      else
+
+      if(fGenerator == "Ge77m")
       {
         fParticleGun->SetParticleDefinition(
           theParticleTable->GetIonTable()->GetIon(32, 77, 159.71 * keV));
         theMass = theParticleTable->GetIonTable()->GetIonMass(32, 77, 0, 1);
       }
+      G4double      totMomentum = std::sqrt(energy * energy + 2 * theMass * energy);
+      G4double      pz          = -1 * std::cos(theta);
+      G4double      px          = std::sin(theta) * cos(phi);
+      G4double      py          = std::sin(theta) * sin(phi);
+      G4ThreeVector momentumDir(px, py, pz);
+
+      fParticleGun->SetParticleMomentumDirection(momentumDir);
+
+      fParticleGun->SetParticleEnergy(energy);
+
+      fParticleGun->SetParticlePosition(G4ThreeVector(x, y, z));
+
+      fParticleGun->GeneratePrimaryVertex(event);
     }
+    else{
+      fParticleGun->SetParticleDefinition(theParticleTable->FindParticle("gamma"));
+      WLGDPetersGammaCascadeReader* pgcr = WLGDPetersGammaCascadeReader::GetInstance();
+      GammaCascadeLine input = pgcr->GetNextEntry(pgc_neutron_ekin);
+      for(int i = 0; i < input.m; i++){
+        G4double theta = rndm(generator) * 180. * deg;
+        G4double phi   = rndm(generator) * 360. * deg;
 
-    if(fGenerator == "Ge77m")
-    {
-      fParticleGun->SetParticleDefinition(
-        theParticleTable->GetIonTable()->GetIon(32, 77, 159.71 * keV));
-      theMass = theParticleTable->GetIonTable()->GetIonMass(32, 77, 0, 1);
+        G4double      pz          = -1 * std::cos(theta);
+        G4double      px          = std::sin(theta) * cos(phi);
+        G4double      py          = std::sin(theta) * sin(phi);
+        G4ThreeVector momentumDir(px, py, pz);
+        fParticleGun->SetParticleMomentumDirection(momentumDir);
+        fParticleGun->SetParticleEnergy(input.eg[i]*keV);
+        fParticleGun->SetParticlePosition(G4ThreeVector(x, y, z));
+        fParticleGun->GeneratePrimaryVertex(event);
+      }
     }
-    G4double      totMomentum = std::sqrt(energy * energy + 2 * theMass * energy);
-    G4double      pz          = -1 * std::cos(theta);
-    G4double      px          = std::sin(theta) * cos(phi);
-    G4double      py          = std::sin(theta) * sin(phi);
-    G4ThreeVector momentumDir(px, py, pz);
-
-    fParticleGun->SetParticleMomentumDirection(momentumDir);
-
-    fParticleGun->SetParticleEnergy(energy);
-
-    fParticleGun->SetParticlePosition(G4ThreeVector(x, y, z));
-
-    fParticleGun->GeneratePrimaryVertex(event);
   }
   if(fGenerator == "ModeratorNeutrons")
   {
@@ -628,7 +750,7 @@ void WLGDPrimaryGeneratorAction::SetGenerator(const G4String& name)
 {
   std::set<G4String> knownGenerators = {
     "MeiAndHume",        "Musun",           "Ge77m", "Ge77andGe77m",
-    "ModeratorNeutrons", "ExternalNeutrons", "Musun_alternative", "SimpleNeutronGun"
+    "ModeratorNeutrons", "ExternalNeutrons", "Musun_alternative", "SimpleNeutronGun", "GammaCascade"
   };
   if(knownGenerators.count(name) == 0)
   {
@@ -654,6 +776,10 @@ void WLGDPrimaryGeneratorAction::SetSimpleNeutronGun_coord_z(const G4double& z)
 void WLGDPrimaryGeneratorAction::SetSimpleNeutronGun_ekin(const G4double& ekin)
 {
   neutron_ekin = ekin;
+}
+void WLGDPrimaryGeneratorAction::PetersGammaCascade_ekin(const G4double& ekin)
+{
+  pgc_neutron_ekin = ekin;
 }
 
 void WLGDPrimaryGeneratorAction::shortcutToChangeFileName(const G4String& newFile)
@@ -695,23 +821,31 @@ void WLGDPrimaryGeneratorAction::DefineCommands()
     .SetGuidance("Musun_alternative = Alternative Musun input")
     .SetGuidance("Ge77m = generate Ge77m inside the HPGe detectors")
     .SetGuidance("Ge77andGe77m = generate 50% Ge77, 50% Ge77m inside the HPGe detectors")
+    .SetGuidance("GammaCascade = generate Peters gamma cascade inside the HPGe detectors")
     .SetGuidance("ModeratorNeutrons = generate neutrons inside the neutron moderators")
     .SetGuidance("ExternalNeutrons = generate neutrons from outside the water tank")
     .SetCandidates(
-      "MeiAndHume Musun Musun_alternative Ge77m Ge77andGe77m ModeratorNeutrons ExternalNeutrons SimpleNeutronGun");
+      "MeiAndHume Musun Musun_alternative Ge77m Ge77andGe77m ModeratorNeutrons ExternalNeutrons SimpleNeutronGun GammaCascade");
 
   fMessenger->DeclareMethod("SimpleNeutronGun_coord_x", &WLGDPrimaryGeneratorAction::SetSimpleNeutronGun_coord_x)    
     .SetGuidance("Set the x coordinate for the neutron gun")
     .SetDefaultValue("0");
+
   fMessenger->DeclareMethod("SimpleNeutronGun_coord_y", &WLGDPrimaryGeneratorAction::SetSimpleNeutronGun_coord_y)    
     .SetGuidance("Set the y coordinate for the neutron gun")
     .SetDefaultValue("0");
+
   fMessenger->DeclareMethod("SimpleNeutronGun_coord_z", &WLGDPrimaryGeneratorAction::SetSimpleNeutronGun_coord_z)    
     .SetGuidance("Set the z coordinate for the neutron gun")
     .SetDefaultValue("0");
+    
   fMessenger->DeclareMethod("SimpleNeutronGun_ekin", &WLGDPrimaryGeneratorAction::SetSimpleNeutronGun_ekin)    
     .SetGuidance("Set the ekin of the neutron")
     .SetDefaultValue("0");
+
+  fMessenger->DeclareMethod("PetersGammaCascade_ekin", &WLGDPrimaryGeneratorAction::PetersGammaCascade_ekin)    
+    .SetGuidance("Set the ekin of the neutron")
+    .SetDefaultValue("1e-3");
 
 
 }

@@ -31,6 +31,7 @@ public:
 private:
   WLGDCrystalHitsCollection* fHitsCollection;
   G4String                   fGeometryName;
+  std::vector<G4int>         fListOfGe77IDs;
 };
 
 #endif

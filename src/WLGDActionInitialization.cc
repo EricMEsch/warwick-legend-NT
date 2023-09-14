@@ -5,6 +5,7 @@
 #include "WLGDStackingAction.hh"
 #include "WLGDSteppingAction.hh"
 #include "WLGDTrackingAction.hh"
+#include "WLGDPetersGammaCascadeReader.hh"
 
 WLGDActionInitialization::WLGDActionInitialization(WLGDDetectorConstruction* det,
                                                    G4String                  name)
@@ -36,4 +37,5 @@ void WLGDActionInitialization::Build() const
   SetUserAction(new WLGDTrackingAction(event, run));
   SetUserAction(new WLGDSteppingAction(event, run, fDet));
   SetUserAction(new WLGDStackingAction);
+  WLGDPetersGammaCascadeReader::GetInstance();
 }

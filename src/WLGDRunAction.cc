@@ -131,12 +131,17 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
     fEventAction->GetIndividualEnergyDeposition_LArOrGe());
   analysisManager->CreateNtupleIColumn("IndividualEnergyDeposition_ID",
                                        fEventAction->GetIndividualEnergyDeposition_ID());
+  analysisManager->CreateNtupleIColumn("IndividualEnergyDeposition_ParentID",
+                                       fEventAction->GetIndividualEnergyDeposition_ParentID());
   analysisManager->CreateNtupleIColumn(
     "IndividualEnergyDeposition_Type",
     fEventAction->GetIndividualEnergyDeposition_Type());
   analysisManager->CreateNtupleIColumn(
     "IndividualEnergyDeposition_DetectorNumber",
     fEventAction->GetIndividualEnergyDeposition_DetectorNumber());
+  analysisManager->CreateNtupleIColumn(
+    "IndividualEnergyDeposition_VolumeNumber",
+    fEventAction->GetIndividualEnergyDeposition_VolumeNumber());
 
   analysisManager->CreateNtupleIColumn("Multiplicity_prompt",
                                        fEventAction->GetMultiplicity_prompt());
@@ -357,14 +362,27 @@ void WLGDRunAction::EndOfRunAction(const G4Run* /*run*/)
   // Adding detail output for neutron production information
   if(fWriteOutNeutronProductionInfo == 1)
   {
+
+    std::vector<G4int> evntID = fEventAction->GetEvntID();
+    std::set<G4int> set_evntID;
+    G4cout << "EvntIDs of Ge77 producing:" << G4endl;
+    for(int i = 0; i < evntID.size(); i++){
+      G4cout << evntID[i] << G4endl;
+      set_evntID.insert(evntID[i]);
+    }
+
+
     G4cout << "N of neutrons total: " << vector_x_dir.size() << G4endl;
     for(int i = 0; i < vector_x_dir.size(); i++)
     {
-      outputStream_2 << vector_eventNumber[i] << " " << vector_x_dir[i] << " "
-                     << vector_y_dir[i] << " " << vector_z_dir[i] << " "
-                     << vector_x_mom[i] << " " << vector_y_mom[i] << " "
-                     << vector_z_mom[i] << " " << vector_energy[i] << " "
-                     << vector_parentParticleType[i] << endl;
+      G4cout << vector_eventNumber[i] << G4endl;
+      if(set_evntID.find(vector_eventNumber[i])  != set_evntID.end() || !fWriteOutNeutronProductionInfo_only_on_nc_on_Ge76){
+        outputStream_2 << vector_eventNumber[i] << " " << vector_x_dir[i] << " "
+                      << vector_y_dir[i] << " " << vector_z_dir[i] << " "
+                      << vector_x_mom[i] << " " << vector_y_mom[i] << " "
+                      << vector_z_mom[i] << " " << vector_energy[i] << " "
+                      << vector_parentParticleType[i] << endl;
+      }
     }
     outputStream_2.close();
   }
@@ -374,6 +392,12 @@ void WLGDRunAction::SetWriteOutNeutronProductionInfo(G4int answer)
 {
   fWriteOutNeutronProductionInfo = answer;
 }
+
+void WLGDRunAction::SetWriteOutNeutronProductionInfo_only_on_nc_on_Ge76(G4int answer)
+{
+  fWriteOutNeutronProductionInfo_only_on_nc_on_Ge76 = answer;
+}
+
 
 void WLGDRunAction::SetWriteOutGeneralNeutronInfo(G4int answer)
 {
@@ -409,6 +433,10 @@ void WLGDRunAction::SetNeutronCaptureSiblings(G4int answer)
 {
   fNeutronCaptureSiblings = answer;
 }
+void WLGDRunAction::SetPetersGammaCascadeModel(G4int answer)
+{
+  fPetersGammaCascadeModel = answer;
+}
 
 void WLGDRunAction::DefineCommands()
 {
@@ -419,6 +447,15 @@ void WLGDRunAction::DefineCommands()
     ->DeclareMethod("WriteOutNeutronProductionInfo",
                     &WLGDRunAction::SetWriteOutNeutronProductionInfo)
     .SetGuidance("Set whether to write out Neutron Production Info")
+    .SetGuidance("0 = without write out")
+    .SetGuidance("1 = with write out")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
+
+  fMessenger
+    ->DeclareMethod("WriteOutNeutronProductionInfo_only_on_nc_on_Ge76",
+                    &WLGDRunAction::SetWriteOutNeutronProductionInfo_only_on_nc_on_Ge76)
+    .SetGuidance("Set whether to write out Neutron Production Info only during a neutron capture on Ge76")
     .SetGuidance("0 = without write out")
     .SetGuidance("1 = with write out")
     .SetCandidates("0 1")
@@ -487,6 +524,16 @@ void WLGDRunAction::DefineCommands()
                     &WLGDRunAction::SetReadMuonCrossingWLSR)
     .SetGuidance(
       "Set whether to write out the intersects of a muon crossing the WLSR plus the total energy deposited in it")
+    .SetGuidance("0 = don't")
+    .SetGuidance("1 = do")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
+
+  fMessenger
+    ->DeclareMethod("SetPetersGammaCascadeModel",
+                    &WLGDRunAction::SetPetersGammaCascadeModel)
+    .SetGuidance(
+      "Set whether to use Peters gamma cascade model or keep using the standard model")
     .SetGuidance("0 = don't")
     .SetGuidance("1 = do")
     .SetCandidates("0 1")
