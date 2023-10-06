@@ -37,6 +37,7 @@ public:
   void SetPos(G4ThreeVector xyz) { fPos = xyz; };
   void SetWhichReentranceTube(G4int n) { fwhichReentranceTuber = n; };
   void SetWhichDetector(G4int n) { fwhichDetector = n; };
+  void SetExcitedState(G4int n) { fExcitedState = n; };
 
   // Get methods
   G4int         GetTID() const { return fTid; };
@@ -46,6 +47,7 @@ public:
   G4ThreeVector GetPos() const { return fPos; };
   G4int         GetWhichReentranceTube() const { return fwhichReentranceTuber; };
   G4int         GetWhichDetector() const { return fwhichDetector; };
+  G4int         GetExcitedState() const {return fExcitedState;};
 
 private:
   G4int         fTid;
@@ -61,6 +63,7 @@ private:
   G4int         fwhichReentranceTuber;
   // -- the detector number in which the event occured in
   G4int         fwhichDetector;
+  G4int         fExcitedState;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -4,6 +4,7 @@
 #include "G4UserTrackingAction.hh"
 #include "WLGDEventAction.hh"
 #include "WLGDRunAction.hh"
+#include <random>
 #include <map>
 
 class WLGDTrackingAction : public G4UserTrackingAction
@@ -19,7 +20,11 @@ public:
   virtual ~WLGDTrackingAction(){};
 
   virtual void PreUserTrackingAction(const G4Track*);
-  virtual void PostUserTrackingAction(const G4Track*);
+  virtual void PostUserTrackingAction(const  G4Track*);
+
+  void KillSecundaries( const G4Track* aTrack);
+  G4ThreeVector sample_direction();
+  void ReplaceNeutronCaptureGammas( const G4Track* aTrack);
 
 private:
   double           tmp_neutronXpos, tmp_neutronYpos, tmp_neutronZpos;
@@ -30,6 +35,8 @@ private:
   double           tmp_MuonEnergy;
   WLGDEventAction* fEventAction;
   WLGDRunAction*   fRunAction;
+  std::random_device rd;
+  std::ranlux24      generator;
 };
 
 #endif

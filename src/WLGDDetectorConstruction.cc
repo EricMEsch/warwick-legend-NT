@@ -534,7 +534,7 @@ auto WLGDDetectorConstruction::SetupAlternative() -> G4VPhysicalVolume*
   //
   // Visualization attributes
   //
-  fWorldLogical->SetVisAttributes(G4VisAttributes::GetInvisible());
+ // fWorldLogical->SetVisAttributes(G4VisAttributes::GetInvisible());
 
   auto* redVisAtt = new G4VisAttributes(G4Colour::Red());
   redVisAtt->SetVisibility(true);
@@ -1104,7 +1104,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   //
   // Visualization attributes
   //
-  fWorldLogical->SetVisAttributes(G4VisAttributes::GetInvisible());
+  //fWorldLogical->SetVisAttributes(G4VisAttributes::GetInvisible());
 
   G4Color testColor(0., 109 / 225., 119 / 225.);
   auto*   testVisAtt = new G4VisAttributes(testColor);
@@ -1396,7 +1396,7 @@ auto WLGDDetectorConstruction::SetupHallA() -> G4VPhysicalVolume*
   //
   // Visualization attributes
   //
-  fWorldLogical->SetVisAttributes(G4VisAttributes::GetInvisible());
+  //fWorldLogical->SetVisAttributes(G4VisAttributes::GetInvisible());
 
   auto* redVisAtt = new G4VisAttributes(G4Colour::Red());
   redVisAtt->SetVisibility(true);
@@ -1417,7 +1417,7 @@ auto WLGDDetectorConstruction::SetupHallA() -> G4VPhysicalVolume*
   fCinnLogical->SetVisAttributes(blueVisAtt);
   //fLidLogical->SetVisAttributes(blueVisAtt);
   //fBotLogical->SetVisAttributes(blueVisAtt);
-  fLayerLogical->SetVisAttributes(G4VisAttributes::Invisible);
+  //fLayerLogical->SetVisAttributes(G4VisAttributes::Invisible);
   fGapLogical->SetVisAttributes(greyVisAtt);
   fGeLogical->SetVisAttributes(redVisAtt);
   return fWorldPhysical;

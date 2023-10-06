@@ -27,6 +27,7 @@ add_executable(warwick-legend
   src/WLGDDetectorConstruction.cc
   src/WLGDEventAction.cc
   src/WLGDPrimaryGeneratorAction.cc
+  src/WLGDPetersGammaCascadeReader.cc
   src/WLGDRunAction.cc
   src/WLGDStackingAction.cc
   src/WLGDSteppingAction.cc

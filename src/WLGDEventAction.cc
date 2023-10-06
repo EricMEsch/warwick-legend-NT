@@ -1,6 +1,6 @@
 #include "WLGDEventAction.hh"
 #include "WLGDTrajectory.hh"
-#include "g4root.hh"
+#include "G4AnalysisManager.hh"
 
 #include "G4Event.hh"
 #include "G4HCofThisEvent.hh"
@@ -79,6 +79,7 @@ void WLGDEventAction::BeginOfEventAction(const G4Event*
   nGe77.clear();
   edep.clear();
   ekin.clear();
+  //evntID.clear();
   htrid.clear();
   thit.clear();
   whit.clear();
@@ -290,8 +291,10 @@ void WLGDEventAction::BeginOfEventAction(const G4Event*
   IndividualEnergyDeposition_Position_z.clear();
   IndividualEnergyDeposition_ReentranceTube.clear();
   IndividualEnergyDeposition_ID.clear();
+  IndividualEnergyDeposition_ParentID.clear();
   IndividualEnergyDeposition_Type.clear();
   IndividualEnergyDeposition_DetectorNumber.clear();
+  IndividualEnergyDeposition_VolumeNumber.clear();
 
   EdepPerDetector.clear();
   EdepPerDetector_delayed.clear();
@@ -380,6 +383,7 @@ void WLGDEventAction::EndOfEventAction(const G4Event* event)
   {
     auto hh = (*CrysHC)[i];
 
+    evntID.push_back(eventID);
     htrid.push_back(hh->GetTID());
     whit.push_back(hh->GetWeight());
     thit.push_back(hh->GetTime() / G4Analysis::GetUnitValue("ns"));

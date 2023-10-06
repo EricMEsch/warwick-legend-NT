@@ -1,15 +1,21 @@
 #include "WLGDTrackingAction.hh"
 // #include "WLGDTrackInformation.hh"
 #include "WLGDTrajectory.hh"
+#include "WLGDPetersGammaCascadeReader.hh"
 
 #include "G4RunManager.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4Track.hh"
 #include "G4TrackingManager.hh"
 #include "G4UnitsTable.hh"
+#include "G4IonTable.hh"
+#include "G4Gamma.hh"
+#include "G4StackManager.hh"
 #include <map>
 
-WLGDTrackingAction::WLGDTrackingAction() = default;
+WLGDTrackingAction::WLGDTrackingAction(){
+  generator.seed(rd());  // set a random seed
+}
 
 void WLGDTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 {
@@ -95,8 +101,91 @@ void WLGDTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
   }
 }
 
+void WLGDTrackingAction::KillSecundaries(const G4Track* aTrack){
+  const auto secondaries = aTrack->GetStep()->GetSecondaryInCurrentStep();
+  for (const auto& secondary : *secondaries) {
+      G4Track* nonConstTrack = const_cast<G4Track*>(secondary);
+      //nonConstTrack->SetKineticEnergy(0);
+      nonConstTrack->SetTrackStatus(fStopAndKill);
+  }
+
+  //G4Step* nonConstStep = const_cast<G4Step*>(aTrack->GetStep());
+  //nonConstStep->DeleteSecondaryVector();
+  //G4TrackVector* new_secondary = nonConstStep->NewSecondaryVector();
+  //nonConstStep->SetSecondary(new_secondary);
+}
+
+G4ThreeVector WLGDTrackingAction::sample_direction(){
+  std::uniform_real_distribution<> rndm(0.0, 1.0);
+  double phi = CLHEP::twopi * rndm(generator);
+  double theta = CLHEP::pi * rndm(generator);
+  G4double costheta = std::cos(theta);  // get a random number
+  G4double sintheta = std::sin(theta);
+  G4double sinphi = std::sin(phi);
+  G4double cosphi = std::cos(phi);
+
+  G4double      px = -sintheta * cosphi;
+  G4double      py = -sintheta * sinphi;
+  G4double      pz = -costheta;  // default downwards: pz = -1.0
+
+  G4ThreeVector mom_direction(px,py,pz);
+  return mom_direction;
+}
+
+void WLGDTrackingAction::ReplaceNeutronCaptureGammas(const G4Track* aTrack){
+
+
+  G4StackManager* stackManager = G4EventManager::GetEventManager()->GetStackManager();
+
+  G4double ekin = aTrack->GetKineticEnergy()/keV;
+  WLGDPetersGammaCascadeReader* pgcr = WLGDPetersGammaCascadeReader::GetInstance();
+  GammaCascadeLine input = pgcr->GetNextEntry(ekin);
+
+  G4ThreeVector location = aTrack->GetStep()->GetPostStepPoint()->GetPosition();
+
+  G4IonTable* theTable = G4IonTable::GetIonTable();
+  G4ParticleDefinition * particleDef_nuc = theTable->GetIon(static_cast<G4int>(32), static_cast<G4int>(77), (double)(input.em * keV));
+  G4DynamicParticle* particle_nuc = new G4DynamicParticle(particleDef_nuc, sample_direction());
+  G4Track* secondary_nuc = new G4Track(particle_nuc, aTrack->GetGlobalTime(), location);
+  secondary_nuc->SetParentID(aTrack->GetTrackID());
+  secondary_nuc->SetTrackID(aTrack->GetTrackID()+1);
+  secondary_nuc->SetTouchableHandle(aTrack->GetTouchableHandle());
+  secondary_nuc->SetWeight(1.0);
+  //G4cout << input.em << " - " << secondary_nuc->GetTrackID() << G4endl;
+  stackManager->PushOneTrack(secondary_nuc);
+  //G4Track* nonConstTrack = const_cast<G4Track*>(aTrack);
+  //nonConstTrack->AddSecondary(secondary_nuc);
+  //G4Step* nonConstStep = const_cast<G4Step*>(aTrack->GetStep());
+  //G4ParticleChange* nonConstParticleChange = const_cast<G4ParticleChange*>(aTrack->GetParticleChange());
+  //nonConstParticleChange->AddSecondary(secondary_nuc);
+  //nonConstStep->GetfSecondary()->push_back(secondary_nuc);
+  //aTrack->AddSecondary(secondary_nuc);    
+
+  for(int i = 0; i < input.m; i++){
+
+    G4ParticleDefinition* particleDef_gamma = G4Gamma::Gamma();
+    G4DynamicParticle* particle_gamma = new G4DynamicParticle(particleDef_gamma, input.eg[i]*keV,sample_direction() );
+    G4Track* secondary_gamma = new G4Track(particle_gamma, aTrack->GetGlobalTime(), location);
+    secondary_gamma->SetParentID(aTrack->GetTrackID());
+    secondary_gamma->SetTouchableHandle(aTrack->GetTouchableHandle());
+    secondary_gamma->SetWeight(1.0);
+    secondary_gamma->SetKineticEnergy(input.eg[i]*keV);
+    secondary_gamma->SetTrackID(aTrack->GetTrackID()+2+i);
+
+    //G4cout << input.eg[i] << " - " << secondary_gamma->GetTrackID() << " - " << secondary_gamma->GetTotalEnergy ()  << G4endl;
+    stackManager->PushOneTrack(secondary_gamma);
+    
+    //nonConstStep->GetfSecondary()->push_back(secondary_gamma);
+    //nonConstParticleChange->AddSecondary(secondary_gamma);
+    //nonConstTrack->AddSecondary(secondary_gamma);
+    //particleChange->AddSecondary(secondary_gamma);
+    //aTrack->AddSecondary(secondary_gamma);
+  }
+}
+
 void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
 {
+
   // for tracking of particles creatd in Gd interactions
   if(fRunAction->getIndividualGdDepositionInfo())
   {
@@ -181,8 +270,8 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
        "biasWrapper(nCapture)")  // altered name necessary due to biasing
     {
       int NumberOfSecundaries = aTrack->GetStep()->GetSecondaryInCurrentStep()->size();
-      for(int i = 0; i < NumberOfSecundaries; i++)
-      {
+      bool is_neutron_capture_on_Ge76 = false;
+      for(int i = 0; i < NumberOfSecundaries; i++){
         if(aTrack->GetStep()
                ->GetSecondaryInCurrentStep()
                ->at(i)
@@ -194,100 +283,103 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
                ->GetParticleDefinition()
                ->GetPDGCharge() == 32)
         {
-          double tmp_x, tmp_y, tmp_z;
-          tmp_x = aTrack->GetStep()->GetPostStepPoint()->GetPosition().getX() / m;
-          tmp_y = aTrack->GetStep()->GetPostStepPoint()->GetPosition().getY() / m;
-          tmp_z = aTrack->GetStep()->GetPostStepPoint()->GetPosition().getZ() / m;
-          fEventAction->AddEkin(aTrack->GetStep()->GetPreStepPoint()->GetKineticEnergy() /
-                                eV);
-          fEventAction->AddNeutronxLoc(tmp_neutronXpos);
-          fEventAction->AddNeutronyLoc(tmp_neutronYpos);
-          fEventAction->AddNeutronzLoc(tmp_neutronZpos);
-          fEventAction->AddNeutronxMom(tmp_neutronXmom);
-          fEventAction->AddNeutronyMom(tmp_neutronYmom);
-          fEventAction->AddNeutronzMom(tmp_neutronZmom);
-          fEventAction->AddNeutronTime(tmp_neutronTime);
-          fEventAction->WriteMostOuterRadius();
-          fEventAction->AddIDListOfGe77SiblingParticles(aTrack->GetTrackID());
-
-          for(int j = 0; j < NumberOfSecundaries; j++){            
-            /*G4cout << j << " - " << aTrack->GetStep()
-               ->GetSecondaryInCurrentStep()->size() << " - " << aTrack->GetStep()
-               ->GetSecondaryInCurrentStep()->at(j)->GetParticleDefinition()->GetPDGEncoding() << " - " << aTrack->GetStep()
-               ->GetSecondaryInCurrentStep()->at(j)->GetKineticEnergy();
-               G4cout << " - " << aTrack->GetStep()
-               ->GetSecondaryInCurrentStep()->at(j)->GetKineticEnergy()/eV << G4endl;*/
-            fEventAction->AddNeutronCaptureSiblings_edep(aTrack->GetStep()->GetSecondaryInCurrentStep()->at(j)->GetKineticEnergy() /eV);
-            fEventAction->AddNeutronCaptureSiblings_type(aTrack->GetStep()->GetSecondaryInCurrentStep()->at(j)->GetParticleDefinition()->GetPDGEncoding());
-          }
+          is_neutron_capture_on_Ge76 = true;
         }  // sending info of neutron producing Ge77 to output
+      }
+      if(is_neutron_capture_on_Ge76){
+        double tmp_x, tmp_y, tmp_z;
+        tmp_x = aTrack->GetStep()->GetPostStepPoint()->GetPosition().getX() / m;
+        tmp_y = aTrack->GetStep()->GetPostStepPoint()->GetPosition().getY() / m;
+        tmp_z = aTrack->GetStep()->GetPostStepPoint()->GetPosition().getZ() / m;
+        fEventAction->AddEkin(aTrack->GetStep()->GetPreStepPoint()->GetKineticEnergy() /
+                              eV);
+        fEventAction->AddNeutronxLoc(tmp_neutronXpos);
+        fEventAction->AddNeutronyLoc(tmp_neutronYpos);
+        fEventAction->AddNeutronzLoc(tmp_neutronZpos);
+        fEventAction->AddNeutronxMom(tmp_neutronXmom);
+        fEventAction->AddNeutronyMom(tmp_neutronYmom);
+        fEventAction->AddNeutronzMom(tmp_neutronZmom);
+        fEventAction->AddNeutronTime(tmp_neutronTime);
+        fEventAction->WriteMostOuterRadius();
+        fEventAction->AddIDListOfGe77SiblingParticles(aTrack->GetTrackID());
+
+        if(fRunAction->getPetersGammaCascadeModel()){
+          KillSecundaries(aTrack);
+          ReplaceNeutronCaptureGammas(aTrack);
+        }
+
+        for(int j = 0; j < aTrack->GetStep()->GetSecondaryInCurrentStep()->size(); j++){            
+          fEventAction->AddNeutronCaptureSiblings_edep(aTrack->GetStep()->GetSecondaryInCurrentStep()->at(j)->GetKineticEnergy() /eV);
+          fEventAction->AddNeutronCaptureSiblings_type(aTrack->GetStep()->GetSecondaryInCurrentStep()->at(j)->GetParticleDefinition()->GetPDGEncoding());
+        }
+      }
+      
+      for(int i = 0; i < NumberOfSecundaries; i++)
+      {
+        if(aTrack->GetStep()
+            ->GetSecondaryInCurrentStep()
+            ->at(i)
+            ->GetParticleDefinition()
+            ->GetPDGCharge() == 18)
+        {
+          fEventAction->AddnCAr_timing(
+            aTrack->GetStep()->GetPostStepPoint()->GetGlobalTime() / s);
+          fEventAction->AddnCAr_x(
+            aTrack->GetStep()->GetPostStepPoint()->GetPosition().getX() / m);
+          fEventAction->AddnCAr_y(
+            aTrack->GetStep()->GetPostStepPoint()->GetPosition().getY() / m);
+          fEventAction->AddnCAr_z(
+            aTrack->GetStep()->GetPostStepPoint()->GetPosition().getZ() / m);
+          fEventAction->AddnCAr_A(aTrack->GetStep()
+                                    ->GetSecondaryInCurrentStep()
+                                    ->at(i)
+                                    ->GetParticleDefinition()
+                                    ->GetAtomicMass());
+        }  // send info of nC on Ar
         else
         {
           if(aTrack->GetStep()
-               ->GetSecondaryInCurrentStep()
-               ->at(i)
-               ->GetParticleDefinition()
-               ->GetPDGCharge() == 18)
+              ->GetSecondaryInCurrentStep()
+              ->at(i)
+              ->GetParticleDefinition()
+              ->GetPDGCharge() == 64)
           {
-            fEventAction->AddnCAr_timing(
+            fEventAction->AddnCGd_timing(
               aTrack->GetStep()->GetPostStepPoint()->GetGlobalTime() / s);
-            fEventAction->AddnCAr_x(
+            fEventAction->AddnCGd_x(
               aTrack->GetStep()->GetPostStepPoint()->GetPosition().getX() / m);
-            fEventAction->AddnCAr_y(
+            fEventAction->AddnCGd_y(
               aTrack->GetStep()->GetPostStepPoint()->GetPosition().getY() / m);
-            fEventAction->AddnCAr_z(
+            fEventAction->AddnCGd_z(
               aTrack->GetStep()->GetPostStepPoint()->GetPosition().getZ() / m);
-            fEventAction->AddnCAr_A(aTrack->GetStep()
+            fEventAction->AddnCGd_A(aTrack->GetStep()
                                       ->GetSecondaryInCurrentStep()
                                       ->at(i)
                                       ->GetParticleDefinition()
                                       ->GetAtomicMass());
-          }  // send info of nC on Ar
+            fEventAction->AddIDListOfGdSiblingParticles(aTrack->GetTrackID());
+          }  // send info of nC on Gd
           else
           {
-            if(aTrack->GetStep()
-                 ->GetSecondaryInCurrentStep()
-                 ->at(i)
-                 ->GetParticleDefinition()
-                 ->GetPDGCharge() == 64)
-            {
-              fEventAction->AddnCGd_timing(
-                aTrack->GetStep()->GetPostStepPoint()->GetGlobalTime() / s);
-              fEventAction->AddnCGd_x(
-                aTrack->GetStep()->GetPostStepPoint()->GetPosition().getX() / m);
-              fEventAction->AddnCGd_y(
-                aTrack->GetStep()->GetPostStepPoint()->GetPosition().getY() / m);
-              fEventAction->AddnCGd_z(
-                aTrack->GetStep()->GetPostStepPoint()->GetPosition().getZ() / m);
-              fEventAction->AddnCGd_A(aTrack->GetStep()
+            fEventAction->AddnCOther_timing(
+              aTrack->GetStep()->GetPostStepPoint()->GetGlobalTime() / s);
+            fEventAction->AddnCOther_x(
+              aTrack->GetStep()->GetPostStepPoint()->GetPosition().getX() / m);
+            fEventAction->AddnCOther_y(
+              aTrack->GetStep()->GetPostStepPoint()->GetPosition().getY() / m);
+            fEventAction->AddnCOther_z(
+              aTrack->GetStep()->GetPostStepPoint()->GetPosition().getZ() / m);
+            fEventAction->AddnCOther_A(aTrack->GetStep()
                                         ->GetSecondaryInCurrentStep()
                                         ->at(i)
                                         ->GetParticleDefinition()
                                         ->GetAtomicMass());
-              fEventAction->AddIDListOfGdSiblingParticles(aTrack->GetTrackID());
-            }  // send info of nC on Gd
-            else
-            {
-              fEventAction->AddnCOther_timing(
-                aTrack->GetStep()->GetPostStepPoint()->GetGlobalTime() / s);
-              fEventAction->AddnCOther_x(
-                aTrack->GetStep()->GetPostStepPoint()->GetPosition().getX() / m);
-              fEventAction->AddnCOther_y(
-                aTrack->GetStep()->GetPostStepPoint()->GetPosition().getY() / m);
-              fEventAction->AddnCOther_z(
-                aTrack->GetStep()->GetPostStepPoint()->GetPosition().getZ() / m);
-              fEventAction->AddnCOther_A(aTrack->GetStep()
-                                           ->GetSecondaryInCurrentStep()
-                                           ->at(i)
-                                           ->GetParticleDefinition()
-                                           ->GetAtomicMass());
-              fEventAction->AddnCOther_ZC(aTrack->GetStep()
-                                            ->GetSecondaryInCurrentStep()
-                                            ->at(i)
-                                            ->GetParticleDefinition()
-                                            ->GetPDGCharge());
-            }  // send info of all other nC
-          }
+            fEventAction->AddnCOther_ZC(aTrack->GetStep()
+                                          ->GetSecondaryInCurrentStep()
+                                          ->at(i)
+                                          ->GetParticleDefinition()
+                                          ->GetPDGCharge());
+          }  // send info of all other nC
         }
       }
     }

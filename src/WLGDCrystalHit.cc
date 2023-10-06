@@ -31,6 +31,7 @@ WLGDCrystalHit::WLGDCrystalHit(const WLGDCrystalHit& right)
   fPos                  = right.fPos;
   fwhichReentranceTuber = right.fwhichReentranceTuber;
   fwhichDetector        = right.fwhichDetector;
+  fExcitedState         = right.fExcitedState;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -44,6 +45,7 @@ const WLGDCrystalHit& WLGDCrystalHit::operator=(const WLGDCrystalHit& right)
   fPos                  = right.fPos;
   fwhichReentranceTuber = right.fwhichReentranceTuber;
   fwhichDetector        = right.fwhichDetector;
+  fExcitedState         = right.fExcitedState;
 
   return *this;
 }

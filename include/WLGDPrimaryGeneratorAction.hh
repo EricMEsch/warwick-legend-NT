@@ -102,6 +102,7 @@ public:
   void SetSimpleNeutronGun_coord_y(const G4double& y);
   void SetSimpleNeutronGun_coord_z(const G4double& z);
   void SetSimpleNeutronGun_ekin(const G4double& ekin);
+  void PetersGammaCascade_ekin(const G4double& ekin);
   // -- adjust the z-offset for the Musun algorithm
   void SetZShift(G4double fZShift);
 
@@ -113,6 +114,10 @@ private:
   void DefineCommands();
 
   WLGDDetectorConstruction* fDetector;
+
+  vector<int> WLGD_get_coord_from_index(int index);
+  vector<double> WLGD_get_carthesian_coordinates(int index);
+  vector<double> WLGD_generate_random_position_in_detectors();
 
   G4ParticleGun*      fParticleGun;
   G4GenericMessenger* fMessenger;
@@ -132,6 +137,7 @@ private:
   G4double coord_y;
   G4double coord_z;
   G4double neutron_ekin;
+  G4double pgc_neutron_ekin;
 
 };
 

@@ -454,6 +454,7 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
           fEventAction->AddIndividualEnergyDeposition_Position_z(tmp_z / m);
           fEventAction->AddIndividualEnergyDeposition_LArOrGe(whichVolume);
           fEventAction->AddIndividualEnergyDeposition_ID(aStep->GetTrack()->GetTrackID());
+          fEventAction->AddIndividualEnergyDeposition_ParentID(aStep->GetTrack()->GetParentID());
           fEventAction->AddIndividualEnergyDeposition_Type(
             aStep->GetTrack()->GetParticleDefinition()->GetPDGEncoding());
           int tmp = -1;
@@ -464,6 +465,30 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
                ->GetName() == "Layer_log")
             tmp = detector_number;
           fEventAction->AddIndividualEnergyDeposition_DetectorNumber(tmp);
+          
+          int VolumeNumber = -1;
+          if(aStep->GetPostStepPoint()
+                 ->GetTouchable()
+                 ->GetVolume(0)
+                 ->GetLogicalVolume()
+                 ->GetName() == "Ge_log")
+            VolumeNumber = 0;
+          
+          if(aStep->GetPostStepPoint()
+                 ->GetTouchable()
+                 ->GetVolume(0)
+                 ->GetLogicalVolume()
+                 ->GetName() == "ULar_log")
+            VolumeNumber = 1;
+
+          if(aStep->GetPostStepPoint()
+                 ->GetTouchable()
+                 ->GetVolume(0)
+                 ->GetLogicalVolume()
+                 ->GetName() == "Lar_log")
+            VolumeNumber = 2;
+
+          fEventAction->AddIndividualEnergyDeposition_VolumeNumber(VolumeNumber);
         }
 
       }
