@@ -17,6 +17,9 @@
 # lab depth [km.w.e.]
 /WLGD/generator/depth 5.89
 
+# default input file name
+/WLGD/generator/setMUSUNFile ./musun_gs_100M.dat
+
 # start
 /run/beamOn 4
 
