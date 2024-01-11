@@ -548,6 +548,50 @@ public:
       EdepPerDetector_delayed_onlyGd[copyNumber] + Edep;
   }
 
+  // Getters and setter for Neutron Capture
+  // For Neutron tagger
+  void Add_NCaptureIsotopes(G4String name)
+  {
+    NCaptureIsotopes.push_back(name);
+  }
+
+  void Add_NCaptureX(G4double pos)
+  {
+    NCaptureX.push_back(pos);
+  }
+
+  void Add_NCaptureY(G4double pos)
+  {
+    NCaptureY.push_back(pos);
+  }
+
+  void Add_NCaptureZ(G4double pos)
+  {
+    NCaptureZ.push_back(pos);
+  }
+
+  void Add_NCaptureEnergy(G4double energy)
+  {
+    NCaptureEnergy.push_back(energy);
+  }
+
+  void Add_NCaptureTime(G4double time)
+  {
+    NCaptureTime.push_back(time);
+  }
+
+  std::vector<G4int>&       GetNCaptureAmount()   
+  {
+    NCaptureAmount.push_back(NCaptureIsotopes.size());
+    return NCaptureAmount; 
+  }
+  std::vector<std::string>&    GetNCaptureIsotopes() { return NCaptureIsotopes; }
+  std::vector<G4double>&    GetNCaptureX() { return NCaptureX; }
+  std::vector<G4double>&    GetNCaptureY() { return NCaptureY; }
+  std::vector<G4double>&    GetNCaptureZ() { return NCaptureZ; }
+  std::vector<G4double>&    GetNCaptureEnergy() { return NCaptureEnergy; }
+  std::vector<G4double>&    GetNCaptureTime() { return NCaptureTime; }
+
   // The default is that only events with Ge77 production are saved. This function relaxes the condition so that all events are saved.
   void SaveAllEvents(G4int answer);
   void SaveAllProductions(G4int answer);
@@ -837,6 +881,16 @@ private:
   std::vector<G4double> v_Muon_WLSR_intersect_y;
   std::vector<G4double> v_Muon_WLSR_intersect_z;
   std::vector<G4double> v_Muon_WLSR_Edep;
+
+  // EDIT: by Eric Esch
+  // Neutron Capture for Neutrontagger
+  std::vector<G4int>    NCaptureAmount;
+  std::vector<std::string> NCaptureIsotopes;
+  std::vector<G4double> NCaptureX;
+  std::vector<G4double> NCaptureY;
+  std::vector<G4double> NCaptureZ;
+  std::vector<G4double> NCaptureEnergy;
+  std::vector<G4double> NCaptureTime;
 };
 
 #endif

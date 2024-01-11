@@ -347,6 +347,14 @@ void WLGDEventAction::BeginOfEventAction(const G4Event*
   v_Muon_WLSR_Edep.clear();
   v_Muon_WLSR_Edep.push_back(0);
 
+  NCaptureAmount.clear();
+  NCaptureIsotopes.clear();
+  NCaptureX.clear();
+  NCaptureY.clear();
+  NCaptureZ.clear();
+  NCaptureEnergy.clear();
+  NCaptureTime.clear();
+
   makeMap();
 }
 

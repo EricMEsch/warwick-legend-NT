@@ -76,6 +76,7 @@ private:
   G4String              fout2, fout3;
   ofstream              outputStream_2;
   G4int                 fWriteOutNeutronProductionInfo = 0; 
+  G4int                 fWriteOutNeutronCaptureInfo = 1;
   G4int                 fWriteOutNeutronProductionInfo_only_on_nc_on_Ge76 = 0; 
   G4int                 fWriteOutGeneralNeutronInfo    = 0;
   G4int                 fWriteOutAdvancedMultiplicity  = 0;
@@ -95,6 +96,7 @@ private:
   std::vector<G4double> vector_energy;
   std::vector<G4int>    vector_parentParticleType;
   void                  SetWriteOutNeutronProductionInfo(G4int answer);
+  void                  SetWriteOutNeutronCaptureInfo(G4int answer);
   void                  SetWriteOutNeutronProductionInfo_only_on_nc_on_Ge76(G4int answer);
   void                  SetWriteOutGeneralNeutronInfo(G4int answer);
   void                  SetWriteOutAdvancedMultiplicity(G4int answer);

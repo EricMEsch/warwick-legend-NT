@@ -9,6 +9,8 @@
 #include "G4UserSteppingAction.hh"
 #include "WLGDDetectorConstruction.hh"
 #include "WLGDRunAction.hh"
+#include "G4HadronicProcess.hh"
+#include "G4BiasingProcessInterface.hh"
 #include "globals.hh"
 
 class WLGDTrackingAction;

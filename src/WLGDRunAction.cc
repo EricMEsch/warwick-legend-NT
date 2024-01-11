@@ -19,7 +19,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
 
   // Create analysis manager
   auto analysisManager = G4AnalysisManager::Instance();
-  analysisManager->SetDefaultFileType("root");
+  analysisManager->SetDefaultFileType("csv");
   // Create directories
   analysisManager->SetVerboseLevel(1);
   analysisManager->SetNtupleMerging(false);
@@ -31,6 +31,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   //
   analysisManager->CreateNtuple("Score", "Hits");
   analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
+/*
   analysisManager->CreateNtupleIColumn("HitID", fEventAction->GetHitTID());
   analysisManager->CreateNtupleDColumn("Edep", fEventAction->GetHitEdep());
   analysisManager->CreateNtupleDColumn("Time", fEventAction->GetHitTime());
@@ -75,6 +76,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
                                        fEventAction->GetNumberOfNeutronsInEvent());
   analysisManager->CreateNtupleDColumn("NeutronsMostOuterRadius",
                                        fEventAction->GetNeutronsMostOuterRadius());
+*/
   /*
     analysisManager->CreateNtupleDColumn("Neutronxtrack",
     fEventAction->GetNeutronxTrack());
@@ -83,6 +85,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
     analysisManager->CreateNtupleDColumn("Neutronztrack",
     fEventAction->GetNeutronzTrack());
   */
+/*
   analysisManager->CreateNtupleDColumn("LArEnergyDeposition",
                                        fEventAction->GetLArEnergyDeposition());
   analysisManager->CreateNtupleDColumn("GeEnergyDeposition",
@@ -304,6 +307,20 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleDColumn("Muon_WLSR_intersect_y", fEventAction->Get_Muon_WLSR_intersect_y());
   analysisManager->CreateNtupleDColumn("Muon_WLSR_intersect_z", fEventAction->Get_Muon_WLSR_intersect_z());
   analysisManager->CreateNtupleDColumn("Muon_WLSR_Edep", fEventAction->Get_Muon_WLSR_Edep());
+*/
+
+  // EDIT: by Eric Esch
+  // Neutron Capture for Neutrontagger
+  if(fWriteOutNeutronCaptureInfo)
+  {
+    analysisManager->CreateNtupleIColumn("NCaptureAmount", fEventAction->GetNCaptureAmount());
+    analysisManager->CreateNtupleSColumn("NCaptureIsotopeNames", fEventAction->GetNCaptureIsotopes());
+    analysisManager->CreateNtupleDColumn("NCaptureX", fEventAction->GetNCaptureX());
+    analysisManager->CreateNtupleDColumn("NCaptureY", fEventAction->GetNCaptureY());
+    analysisManager->CreateNtupleDColumn("NCaptureZ", fEventAction->GetNCaptureZ());
+    analysisManager->CreateNtupleDColumn("NCaptureEnergy", fEventAction->GetNCaptureEnergy());
+    analysisManager->CreateNtupleDColumn("NCaptureTime", fEventAction->GetNCaptureTime());
+  }
 
   analysisManager->FinishNtuple();
 }
@@ -393,6 +410,11 @@ void WLGDRunAction::SetWriteOutNeutronProductionInfo(G4int answer)
   fWriteOutNeutronProductionInfo = answer;
 }
 
+void WLGDRunAction::SetWriteOutNeutronCaptureInfo(G4int answer)
+{
+  fWriteOutNeutronCaptureInfo = answer;
+}
+
 void WLGDRunAction::SetWriteOutNeutronProductionInfo_only_on_nc_on_Ge76(G4int answer)
 {
   fWriteOutNeutronProductionInfo_only_on_nc_on_Ge76 = answer;
@@ -451,6 +473,15 @@ void WLGDRunAction::DefineCommands()
     .SetGuidance("1 = with write out")
     .SetCandidates("0 1")
     .SetDefaultValue("0");
+
+  fMessenger
+    ->DeclareMethod("WriteOutNeutronCaptureInfo",
+                    &WLGDRunAction::SetWriteOutNeutronCaptureInfo)
+    .SetGuidance("Set whether to write out Neutron Capture Info")
+    .SetGuidance("0 = without write out")
+    .SetGuidance("1 = with write out")
+    .SetCandidates("0 1")
+    .SetDefaultValue("1");
 
   fMessenger
     ->DeclareMethod("WriteOutNeutronProductionInfo_only_on_nc_on_Ge76",
