@@ -133,6 +133,11 @@ void WLGDDetectorConstruction::DefineMaterials()
   gadoliniumSulfate->AddElement(elS, 3);
   gadoliniumSulfate->AddElement(O, 12);
 
+  G4Material* gadoliniumOxide =
+    new G4Material("GadoliniumOxide", density, 2);  // Gd2O3
+  gadoliniumOxide->AddElement(elGd, 2);
+  gadoliniumOxide->AddElement(O, 3);
+
   G4Material* purewater = G4Material::GetMaterial(
     "G4_WATER");  // EDIT: changed water to purewater & use it to create "special" water
   water = new G4Material("GdLoadedWater", 1.000000 * g / cm3, 2);
@@ -1195,6 +1200,8 @@ auto WLGDDetectorConstruction::SetupHallA() -> G4VPhysicalVolume*
   auto* stdRock    = G4Material::GetMaterial("StdRock");
   auto* roiMat     = G4Material::GetMaterial("enrGe");
   auto* larMat_alt = G4Material::GetMaterial("CombinedArXeHe3");
+  auto*  PEMat      = G4Material::GetMaterial("PolyEthylene");
+  auto* GdOxide    = G4Material::GetMaterial("GadoliniumOxide");
 
   if(fXeConc != 0 || fHe3Conc != 0)
     larMat = larMat_alt;
@@ -1381,6 +1388,7 @@ auto WLGDDetectorConstruction::SetupHallA() -> G4VPhysicalVolume*
     }
   }
 
+
   // WLSR volume - its a workaround to access the volume of the WLSR w/o implementing it properly
   if(fGeometryName == "hallA_only_WLSR"){
     // cavern
@@ -1392,6 +1400,38 @@ auto WLGDDetectorConstruction::SetupHallA() -> G4VPhysicalVolume*
     new G4PVPlacement(nullptr, G4ThreeVector(), fWLSR_LAr_logical,
                     "WLSR_LAr_physical", fLarLogical, false, 0, true);
   }
+
+  // edit by Eric Esch
+  // Add Gd2O3 String in center as in Gerda Paper
+
+  G4double StringRad = 5 * cm; // 10cm diameter
+  G4double Stringhheight = (45 / 2) * cm; // 45 cm height (i guess)
+  G4double StringCenter = -1 * cm;
+  G4double SteelThick = 2 * mm;
+  G4double PowderThick = 0.5 * cm; // No idea, doesnt say in Paper?
+  G4double PEhheight = (42/2) * cm; // As in paper
+
+  // Stainless Steel holder with Gd2O3 powder around PE moderator
+
+  auto* SteelHolderSolid = new G4Tubs("SteelHolderSolid", 0.0 * cm, StringRad,
+                                Stringhheight, 0.0, CLHEP::twopi);
+  auto* SteelHolderLogical = new G4LogicalVolume(SteelHolderSolid, steelMat, "SteelHolder_log");
+  new G4PVPlacement(nullptr, G4ThreeVector(0.0, 0.0,  StringCenter), SteelHolderLogical,
+                    "SteelHolder_phys", fLarLogical, false, 0, true);
+  // Gd2O3 powder
+  auto* GdPowderSolid = new G4Tubs("GdPowderSolid", 0.0 * cm, StringRad - SteelThick,
+                                Stringhheight - SteelThick, 0.0, CLHEP::twopi);
+  auto* GdPowderLogical = new G4LogicalVolume(GdPowderSolid, GdOxide, "GdPowder_log");
+  new G4PVPlacement(nullptr, G4ThreeVector(0.0, 0.0,  0.0), GdPowderLogical,
+                    "GdPowder_phys", SteelHolderLogical, false, 0, true);
+  // PE neutron moderator in middle
+  auto* PEsolid = new G4Tubs("PEsolid", 0.0 * cm, StringRad - SteelThick - PowderThick,
+                                PEhheight, 0.0, CLHEP::twopi); 
+  auto* PELogical = new G4LogicalVolume(PEsolid, PEMat, "PE_log");       
+  new G4PVPlacement(nullptr, G4ThreeVector(0.0, 0.0,  0.0), PELogical,
+                    "PE_phys", GdPowderLogical, false, 0, true);                     
+
+
 
   //
   // Visualization attributes
