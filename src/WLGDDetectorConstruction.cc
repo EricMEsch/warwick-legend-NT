@@ -1407,8 +1407,8 @@ auto WLGDDetectorConstruction::SetupHallA() -> G4VPhysicalVolume*
   G4double StringRad = 5 * cm; // 10cm diameter
   G4double Stringhheight = (45 / 2) * cm; // 45 cm height (i guess)
   G4double StringCenter = -1 * cm;
-  G4double SteelThick = 2 * mm;
-  G4double PowderThick = 0.5 * cm; // No idea, doesnt say in Paper?
+  G4double SteelThick = 0.2 * cm;
+  G4double PowderThick = 0.2 * cm; // No idea, doesnt say in Paper?
   G4double PEhheight = (42/2) * cm; // As in paper
 
   // Stainless Steel holder with Gd2O3 powder around PE moderator

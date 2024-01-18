@@ -1,5 +1,9 @@
 #include "WLGDPetersGammaCascadeReader.hh"
 
+// edit by Eric Esch
+// Adjust Reader for Gd kaskades.
+// As i dont expect the necessity to use both in the same simulation i just changed the existing functions.
+
 WLGDPetersGammaCascadeReader* WLGDPetersGammaCascadeReader::instance = nullptr;
 
 WLGDPetersGammaCascadeReader* WLGDPetersGammaCascadeReader::GetInstance() {
@@ -13,20 +17,15 @@ void WLGDPetersGammaCascadeReader::ParseFileList(const std::string& file_list){
     CloseFiles();
     std::ifstream file_list_file = std::ifstream(file_list);
     file_names.clear();
-    lower_edge.clear();
-    upper_edge.clear();
     if(file_list_file.is_open()){
         std::string line;
         std::string tmp_file_name;
-        double tmp_lower_edge, tmp_upper_edge;
         G4cout << ">>> Reading Peters gamma cascade file list:" << G4endl;
         while(std::getline(file_list_file, line)){
             istringstream ss(line);
-            ss >> tmp_file_name >> tmp_lower_edge >> tmp_upper_edge;
+            ss >> tmp_file_name;
             file_names.push_back(tmp_file_name);
-            lower_edge.push_back(tmp_lower_edge);
-            upper_edge.push_back(tmp_upper_edge);
-            G4cout << tmp_file_name << ": " << tmp_lower_edge << " - " << tmp_upper_edge << G4endl;
+            G4cout << tmp_file_name << ": " << G4endl;
         }
         G4cout << ">>> Finish" << G4endl;
     }
@@ -81,16 +80,22 @@ void WLGDPetersGammaCascadeReader::OpenFiles() {
     G4cout << ">>> Finish" << G4endl;
 }
 
+/* function not required for Gadolinium Kaskades as only one energy cascade exists there.
 int WLGDPetersGammaCascadeReader::GetIndexFromEnergy(double Ekin){
     for(int i = 0; i < lower_edge.size(); i++)
         if(Ekin > lower_edge[i] && Ekin < upper_edge[i])
             return i;
     return 0; // If no falling in a defined range, take first file.
-}
+} */
 
-GammaCascadeLine WLGDPetersGammaCascadeReader::GetNextEntry(double Ekin) {
-    // determine the file to read from based on energy
-    int file_index = GetIndexFromEnergy(Ekin);
+GammaCascadeLine WLGDPetersGammaCascadeReader::GetNextEntry(bool Gd158) {
+    // determine the file to read from based on boolean flag
+    // First file for Gd156 (and rest) captures and second for Gd158 captures 
+    int file_index = 0;
+    if(Gd158)
+    {
+        file_index = 1;
+    }
     // read next line from file
     std::string line;
     do{
@@ -153,7 +158,7 @@ void WLGDPetersGammaCascadeReader::DefineCommands()
                     &WLGDPetersGammaCascadeReader::SetGammaCascadeFileList)
         .SetGuidance("Set the path to the file list of all gamma cascade input files")
         .SetParameterName("filename", false)
-        .SetDefaultValue("/home/ga63zay/atlas_neuberger/L1K_simulations/peters_gamma_cascade/file_list.txt");
+        .SetDefaultValue("/home/eric/sim/WWLegend/PetersGammaKaskades/file_list.txt");
 
 
   auto& GammaCascadeRandomStartLocationCmd =

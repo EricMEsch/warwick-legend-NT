@@ -132,14 +132,14 @@ G4ThreeVector WLGDTrackingAction::sample_direction(){
   return mom_direction;
 }
 
-void WLGDTrackingAction::ReplaceNeutronCaptureGammas(const G4Track* aTrack){
+void WLGDTrackingAction::ReplaceNeutronCaptureGammas(const G4Track* aTrack, int AtomicMass){
 
 
   G4StackManager* stackManager = G4EventManager::GetEventManager()->GetStackManager();
 
-  G4double ekin = aTrack->GetKineticEnergy()/keV;
   WLGDPetersGammaCascadeReader* pgcr = WLGDPetersGammaCascadeReader::GetInstance();
-  GammaCascadeLine input = pgcr->GetNextEntry(ekin);
+  bool is_capture_on_Gd157 = (AtomicMass == 158);
+  GammaCascadeLine input = pgcr->GetNextEntry(is_capture_on_Gd157);
 
   G4ThreeVector location = aTrack->GetStep()->GetPostStepPoint()->GetPosition();
 
@@ -286,6 +286,36 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
           is_neutron_capture_on_Ge76 = true;
         }  // sending info of neutron producing Ge77 to output
       }
+        // Edit: 2024/01/17 by Eric Esch
+
+        // Add readout for capture on Gd analog to the way Moritz did
+      bool is_neutron_capture_on_Gd = false;
+      int AtomicMass;
+      for(int i = 0; i < NumberOfSecundaries; i++){
+        if(aTrack->GetStep()
+               ->GetSecondaryInCurrentStep()
+               ->at(i)
+               ->GetParticleDefinition()
+               ->GetPDGCharge() == 64)
+        {
+          is_neutron_capture_on_Gd = true;
+          AtomicMass = aTrack->GetStep()
+               ->GetSecondaryInCurrentStep()
+               ->at(i)
+               ->GetParticleDefinition()
+               ->GetAtomicMass();
+        }
+      }
+      if(is_neutron_capture_on_Gd)
+      {
+        if(fRunAction->getPetersGammaCascadeModel())
+        {
+          
+          KillSecundaries(aTrack);
+
+          ReplaceNeutronCaptureGammas(aTrack, AtomicMass);
+        }
+      }
       if(is_neutron_capture_on_Ge76){
         double tmp_x, tmp_y, tmp_z;
         tmp_x = aTrack->GetStep()->GetPostStepPoint()->GetPosition().getX() / m;
@@ -302,11 +332,6 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
         fEventAction->AddNeutronTime(tmp_neutronTime);
         fEventAction->WriteMostOuterRadius();
         fEventAction->AddIDListOfGe77SiblingParticles(aTrack->GetTrackID());
-
-        if(fRunAction->getPetersGammaCascadeModel()){
-          KillSecundaries(aTrack);
-          ReplaceNeutronCaptureGammas(aTrack);
-        }
 
         for(int j = 0; j < aTrack->GetStep()->GetSecondaryInCurrentStep()->size(); j++){            
           fEventAction->AddNeutronCaptureSiblings_edep(aTrack->GetStep()->GetSecondaryInCurrentStep()->at(j)->GetKineticEnergy() /eV);

@@ -11,6 +11,10 @@
 #include <random>
 
 
+// edit by Eric Esch
+// Adjust Reader for Gd kaskades.
+// As i dont expect the necessity to use both in the same simulation i just changed the existing functions.
+
 using namespace std;
 struct GammaCascadeLine {
     int en; // neutron energy [keV]
@@ -30,10 +34,10 @@ public:
     void ParseFileList(const std::string& file_list);
     void CloseFiles();
     void OpenFiles();
-    int GetIndexFromEnergy(double Ekin);
+    //int GetIndexFromEnergy(double Ekin);
     void DefineCommands();
 
-    GammaCascadeLine GetNextEntry(double Ekin);
+    GammaCascadeLine GetNextEntry(bool Gd158);
 
 private:
 
@@ -42,8 +46,6 @@ private:
     std::vector<std::string> file_names;
     //std::vector<std::unique_ptr<std::ifstream>> files;
     std::ifstream* files[100];
-    std::vector<double> lower_edge;
-    std::vector<double> upper_edge;
     G4GenericMessenger* fMessenger;
     G4int fGammaCascadeRandomStartLocation = 0;
   std::random_device rd;

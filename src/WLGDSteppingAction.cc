@@ -103,6 +103,7 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
 
 
         // get id of which reentrance tube
+        /*
         G4int whichReentranceTube;
         if(abs(tmp_x) > abs(tmp_y) && tmp_x > 0)
           whichReentranceTube = 0;
@@ -125,7 +126,7 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
                ->GetLogicalVolume()
                ->GetName() == "Water_log")
           whichReentranceTube = 0;
-
+        */
 
         // calculate total energy deposition in water tank for muon veto
         if(aStep->GetPostStepPoint()

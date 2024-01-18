@@ -24,7 +24,7 @@ public:
 
   void KillSecundaries( const G4Track* aTrack);
   G4ThreeVector sample_direction();
-  void ReplaceNeutronCaptureGammas( const G4Track* aTrack);
+  void ReplaceNeutronCaptureGammas( const G4Track* aTrack, int AtomicMass);
 
 private:
   double           tmp_neutronXpos, tmp_neutronYpos, tmp_neutronZpos;
