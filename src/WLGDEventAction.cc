@@ -138,6 +138,7 @@ void WLGDEventAction::BeginOfEventAction(const G4Event*
   Multiplicity_delayed_long.push_back(0);
   Multiplicity_delayed_long.push_back(0);
 
+  v_TimePerDetector.clear();
   v_EdepPerDetector_prompt.clear();
 
   v_EdepPerDetector_delayed.clear();
@@ -194,7 +195,7 @@ void WLGDEventAction::BeginOfEventAction(const G4Event*
   NumberOfNeutronsProducedInEvent.push_back(0);
 
   v_EdepWater_prompt.clear();
-  v_EdepWater_prompt.push_back(0);
+  v_EdepWater_time.clear();
 
   v_EdepWater_delayed.clear();
   v_EdepWater_delayed.push_back(0);
@@ -236,10 +237,7 @@ void WLGDEventAction::BeginOfEventAction(const G4Event*
   v_prod_parentType.clear();
 
   TotalEnergyDepositionInLAr_prompt.clear();
-  TotalEnergyDepositionInLAr_prompt.push_back(0);
-  TotalEnergyDepositionInLAr_prompt.push_back(0);
-  TotalEnergyDepositionInLAr_prompt.push_back(0);
-  TotalEnergyDepositionInLAr_prompt.push_back(0);
+  TimeOfDepositionInLAr.clear();
 
   TotalEnergyDepositionInGe_prompt.clear();
   TotalEnergyDepositionInGe_prompt.push_back(0);
@@ -297,6 +295,7 @@ void WLGDEventAction::BeginOfEventAction(const G4Event*
   IndividualEnergyDeposition_VolumeNumber.clear();
 
   EdepPerDetector.clear();
+  TimePerDetector.clear();
   EdepPerDetector_delayed.clear();
   EdepPerDetector_delayed_long.clear();
 
@@ -376,7 +375,7 @@ void WLGDEventAction::EndOfEventAction(const G4Event* event)
 
   nGe77.push_back(ekin.size());
 
-  if(CrysHC->entries() <= 0 && fAllEvents == 0)
+  if(NCaptureTime.empty() && fAllEvents == 0)
   {
     return;  // no action on no hit
   }
@@ -405,37 +404,24 @@ void WLGDEventAction::EndOfEventAction(const G4Event* event)
 
   for(auto const& x : EdepPerDetector)
   {
-    if(x.second < 1e4)
-      continue;
+    //if(x.second < 1e4)
+    //  continue;
     int tmp_i = (int) (x.first / 96);
     Multiplicity_prompt[tmp_i] += 1;
-    v_NDetector_prompt.push_back(x.first);
-    v_EdepPerDetector_prompt.push_back(x.second);
-    IncreaseGeEnergyDeposition(x.second, tmp_i);
+    //Stuff to format output for GerdaPaper
+    const std::vector<G4double> &tempenergies = x.second;
+    v_NDetector_prompt.push_back(tempenergies.size());
+    v_EdepPerDetector_prompt.insert(v_EdepPerDetector_prompt.end(), tempenergies.begin(), tempenergies.end());
+    IncreaseGeEnergyDeposition(std::accumulate(tempenergies.begin(), tempenergies.end(), 0.0), tmp_i);
   }
 
-  for(auto const& x : EdepPerDetector_delayed)
+  for(auto const& x : TimePerDetector)
   {
-    if(x.second < 1e4)
-      continue;
-    int tmp_i = (int) (x.first / 96);
-    Multiplicity_delayed[tmp_i] += 1;
-    v_NDetector_delayed.push_back(x.first);
-    v_EdepPerDetector_delayed.push_back(x.second);
-    IncreaseGeEnergyDeposition_delayed(x.second, tmp_i);
+    //Stuff to format output for GerdaPaper
+    const std::vector<G4double> &tempTimes = x.second;
+    v_TimePerDetector.insert(v_TimePerDetector.end(), tempTimes.begin(), tempTimes.end());
   }
-
-  for(auto const& x : EdepPerDetector_delayed_long)
-  {
-    if(x.second < 1e4)
-      continue;
-    int tmp_i = (int) (x.first / 96);
-    Multiplicity_delayed_long[tmp_i] += 1;
-    v_NDetector_delayed_long.push_back(x.first);
-    v_EdepPerDetector_delayed_long.push_back(x.second);
-    IncreaseGeEnergyDeposition_delayed_long(x.second, tmp_i);
-  }
-
+  
   for(auto const& x : EdepPerDetector_prompt_woGd)
   {
     v_NDetector_prompt_woGd.push_back(x.first);

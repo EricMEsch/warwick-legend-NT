@@ -30,8 +30,9 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   // Creating ntuple with vector entries
   //
   analysisManager->CreateNtuple("Score", "Hits");
-  analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
 /*
+  analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
+
   analysisManager->CreateNtupleIColumn("HitID", fEventAction->GetHitTID());
   analysisManager->CreateNtupleDColumn("Edep", fEventAction->GetHitEdep());
   analysisManager->CreateNtupleDColumn("Time", fEventAction->GetHitTime());
@@ -57,8 +58,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleIColumn("DetectorNumber",
                                        fEventAction->GetDetectorNumber());
 
-  analysisManager->CreateNtupleDColumn("EdepWater_prompt",
-                                       fEventAction->GetEdepWater_prompt());
+  
   analysisManager->CreateNtupleDColumn("EdepWater_delayed",
                                        fEventAction->GetEdepWater_delayed());
   analysisManager->CreateNtupleIColumn("MunoVeto", fEventAction->GetMuonVeto_flag());
@@ -85,9 +85,15 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
     analysisManager->CreateNtupleDColumn("Neutronztrack",
     fEventAction->GetNeutronzTrack());
   */
-/*
+  analysisManager->CreateNtupleDColumn("EdepWater_energy",
+                                       fEventAction->GetEdepWater_prompt());
+  analysisManager->CreateNtupleDColumn("EdepWater_time",
+                                       fEventAction->GetEdepWater_time());
   analysisManager->CreateNtupleDColumn("LArEnergyDeposition",
                                        fEventAction->GetLArEnergyDeposition());
+  analysisManager->CreateNtupleDColumn("LArTimeOfDeposition",
+                                       fEventAction->GetTimeOfDepositionLAr());
+/*
   analysisManager->CreateNtupleDColumn("GeEnergyDeposition",
                                        fEventAction->GetGeEnergyDeposition());
   analysisManager->CreateNtupleDColumn("LArEnergyDeposition_delayed",
@@ -153,15 +159,21 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   if(fWriteOutAdvancedMultiplicity)
     analysisManager->CreateNtupleIColumn("Multiplicity_delayed_long",
                                          fEventAction->GetMultiplicity_delayed_long());
-  analysisManager->CreateNtupleDColumn("EdepPerDetector_prompt",
+  */
+  
+  //analysisManager->CreateNtupleDColumn("EdepPerDetector_delayed",
+  //                                     fEventAction->GetEdepPerDetector_delayed());
+  analysisManager->CreateNtupleDColumn("SizePerCopyNumber",
+                                       fEventAction->GetNDetector_prompt());
+  analysisManager->CreateNtupleDColumn("EdepPerDetector",
                                        fEventAction->GetEdepPerDetector_prompt());
-  analysisManager->CreateNtupleDColumn("EdepPerDetector_delayed",
-                                       fEventAction->GetEdepPerDetector_delayed());
+  analysisManager->CreateNtupleDColumn("TimePerDetector",
+                                       fEventAction->GetTimePerDetector());
+  analysisManager->CreateNtupleDColumn("NCaptureTime", fEventAction->GetNCaptureTime());
+  /*
   if(fWriteOutAdvancedMultiplicity)
     analysisManager->CreateNtupleDColumn("EdepPerDetector_delayed_long",
                                          fEventAction->GetEdepPerDetector_delayed_long());
-  analysisManager->CreateNtupleDColumn("CopyNDetector_prompt",
-                                       fEventAction->GetNDetector_prompt());
   analysisManager->CreateNtupleDColumn("CopyNDetector_delayed",
                                        fEventAction->GetNDetector_delayed());
   if(fWriteOutAdvancedMultiplicity)
@@ -311,6 +323,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
 
   // EDIT: by Eric Esch
   // Neutron Capture for Neutrontagger
+  /*
   if(fWriteOutNeutronCaptureInfo)
   {
     analysisManager->CreateNtupleIColumn("NCaptureAmount", fEventAction->GetNCaptureAmount());
@@ -321,7 +334,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
     analysisManager->CreateNtupleDColumn("NCaptureEnergy", fEventAction->GetNCaptureEnergy());
     analysisManager->CreateNtupleDColumn("NCaptureTime", fEventAction->GetNCaptureTime());
   }
-
+  */
   analysisManager->FinishNtuple();
 }
 

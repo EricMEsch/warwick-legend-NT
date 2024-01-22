@@ -66,6 +66,10 @@ public:
   std::vector<G4double>& GetNeutronyTrack() { return out_neutron_track_y; }
   std::vector<G4double>& GetNeutronzTrack() { return out_neutron_track_z; }
 
+  std::vector<G4double>& GetTimeOfDepositionLAr()
+  {
+    return TimeOfDepositionInLAr;
+  }
   std::vector<G4double>& GetLArEnergyDeposition()
   {
     return TotalEnergyDepositionInLAr_prompt;
@@ -154,6 +158,7 @@ public:
   std::vector<G4int>& GetMultiplicity_delayed() { return Multiplicity_delayed; }
   std::vector<G4int>& GetMultiplicity_delayed_long() { return Multiplicity_delayed_long; }
   std::vector<G4double>& GetEdepPerDetector_prompt() { return v_EdepPerDetector_prompt; }
+  std::vector<G4double>& GetTimePerDetector() { return v_TimePerDetector; }
   std::vector<G4double>& GetEdepPerDetector_delayed()
   {
     return v_EdepPerDetector_delayed;
@@ -204,6 +209,7 @@ public:
     return v_NDetector_delayed_onlyGd;
   }
 
+  std::vector<G4double>& GetEdepWater_time() { return v_EdepWater_time; }
   std::vector<G4double>& GetEdepWater_prompt() { return v_EdepWater_prompt; }
   std::vector<G4double>& GetEdepWater_delayed() { return v_EdepWater_delayed; }
   std::vector<G4int>&    GetMuonVeto_flag() { return v_MuonVeto_flag; }
@@ -478,9 +484,13 @@ public:
   std::map<int, int> neutronProducerMap;
 
   void IncreaseByOne_NeutronInEvent() { NumberOfNeutronsProducedInEvent[0] += 1; }
-  void IncreaseLArEnergyDeposition(G4double Edep, G4int whichReEntranceTube)
+  void IncreaseLArTime(G4double Time)
   {
-    TotalEnergyDepositionInLAr_prompt[whichReEntranceTube] += Edep;
+    TimeOfDepositionInLAr.push_back(Time);
+  }  
+  void IncreaseLArEnergyDeposition(G4double Edep)
+  {
+    TotalEnergyDepositionInLAr_prompt.push_back(Edep);
   }  
   void IncreaseGeEnergyDeposition(G4double Edep, G4int whichReEntranceTube)
   {
@@ -509,10 +519,14 @@ public:
   void IncreaseGeEnergyDeposition_after_delayed(G4double Edep, G4int whichReEntranceTube)
   {
     TotalEnergyDepositionInGe_after_delayed[whichReEntranceTube] += Edep;
+  }
+  void IncreaseTimePerDetector(G4int copyNumber, G4double Time)
+  {
+    TimePerDetector[copyNumber].push_back(Time);
   }  
   void IncreaseEdepPerDetector(G4int copyNumber, G4double Edep)
   {
-    EdepPerDetector[copyNumber] = EdepPerDetector[copyNumber] + Edep;
+    EdepPerDetector[copyNumber].push_back(Edep);
   }
   void IncreaseEdepPerDetector_delayed(G4int copyNumber, G4double Edep)
   {
@@ -523,7 +537,8 @@ public:
     EdepPerDetector_delayed_long[copyNumber] =
       EdepPerDetector_delayed_long[copyNumber] + Edep;
   }
-  void IncreaseEdepWater_prompt(G4double Edep) { v_EdepWater_prompt[0] += Edep; }
+  void IncreaseEdepWater_time(G4double Time) { v_EdepWater_time.push_back(Time); }
+  void IncreaseEdepWater_prompt(G4double Edep) { v_EdepWater_prompt.push_back(Edep); }
   void IncreaseEdepWater_delayed(G4double Edep) { v_EdepWater_delayed[0] += Edep; }
 
   void IncreaseEdepPerDetector_prompt_woGd(G4int copyNumber, G4double Edep)
@@ -759,6 +774,7 @@ private:
   std::vector<G4int>    v_Ge77mGammaEmission_whichGe77;
 
   // - output of the total energy deposited in the different time frames (prompt < 10µs, delayed > 10µs and <1mus, after delayed > 1ms)
+  std::vector<G4double> TimeOfDepositionInLAr;
   std::vector<G4double> TotalEnergyDepositionInLAr_prompt;
   std::vector<G4double> TotalEnergyDepositionInLAr_delayed;
 
@@ -798,7 +814,8 @@ private:
   std::vector<G4double>     v_NDetector_delayed;
   std::vector<G4double>     v_NDetector_delayed_long;
   // - now at consideration a bit redudant, but it seems like it is a map with the id of the detector pointing at the energy deposited in it
-  std::map<G4int, G4double> EdepPerDetector;
+  std::map<G4int, std::vector<G4double>> TimePerDetector;
+  std::map<G4int, std::vector<G4double>> EdepPerDetector;
   std::map<G4int, G4double> EdepPerDetector_delayed;
   std::map<G4int, G4double> EdepPerDetector_delayed_long;
 
@@ -813,6 +830,7 @@ private:
   std::map<G4int, G4double> EdepPerDetector_delayed_woGd;
   std::vector<G4int>        Multiplicity_prompt_onlyGd;
   std::vector<G4int>        Multiplicity_delayed_onlyGd;
+  std::vector<G4double>     v_TimePerDetector;
   std::vector<G4double>     v_EdepPerDetector_prompt_onlyGd;
   std::vector<G4double>     v_EdepPerDetector_delayed_onlyGd;
   std::vector<G4double>     v_NDetector_prompt_onlyGd;
@@ -822,6 +840,7 @@ private:
 
   // -- some general information
   // - energy deposited in the water tank (prompt, delayed)
+  std::vector<G4double> v_EdepWater_time;
   std::vector<G4double> v_EdepWater_prompt;
   std::vector<G4double> v_EdepWater_delayed;
   // - if prompt more than 120GeV deposited in the water, raise the muon veto flag

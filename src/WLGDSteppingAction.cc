@@ -103,7 +103,6 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
 
 
         // get id of which reentrance tube
-        /*
         G4int whichReentranceTube;
         if(abs(tmp_x) > abs(tmp_y) && tmp_x > 0)
           whichReentranceTube = 0;
@@ -126,7 +125,6 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
                ->GetLogicalVolume()
                ->GetName() == "Water_log")
           whichReentranceTube = 0;
-        */
 
         // calculate total energy deposition in water tank for muon veto
         if(aStep->GetPostStepPoint()
@@ -137,6 +135,8 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
         {
           // if(aStep->GetPostStepPoint()->GetGlobalTime() / us < 10.)
           fEventAction->IncreaseEdepWater_prompt(aStep->GetTotalEnergyDeposit() / eV);
+          fEventAction->IncreaseEdepWater_time(aStep->GetPostStepPoint()->GetGlobalTime() / us);
+          //LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOK HEEEEEEEEEEEERE
           // else if(aStep->GetPostStepPoint()->GetGlobalTime() / ms < 1.)
           // fEventAction->IncreaseEdepWater_delayed(aStep->GetTotalEnergyDeposit() / eV);
           return;
@@ -164,11 +164,13 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
             aStep->GetTrack()->GetLogicalVolumeAtVertex()->GetName() == "Lar_log"))
         {
           whichVolume = 0;
-          if(aStep->GetPostStepPoint()->GetGlobalTime() / us < 10.)
+          // LOOOK HEEEEERE
+          if(true)
           {
-            fEventAction->IncreaseLArEnergyDeposition(aStep->GetTotalEnergyDeposit() / eV,
-                                                      whichReentranceTube);
+            fEventAction->IncreaseLArTime(aStep->GetPostStepPoint()->GetGlobalTime() / us);
+            fEventAction->IncreaseLArEnergyDeposition(aStep->GetTotalEnergyDeposit() / eV);
           }  // prompt
+          /*
           else
           {
             if(aStep->GetPostStepPoint()->GetGlobalTime() / ms < 1.)
@@ -189,7 +191,8 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
             fEventAction->IncreaseLArEnergyDeposition_after_delayed(
               aStep->GetTotalEnergyDeposit() / eV, whichReentranceTube);
           }  // after delayed
-        }
+          */
+        } 
 
         // Ge energy
 
@@ -202,7 +205,8 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
              ->GetName() == "Ge_log")
         {
           whichVolume = 1;
-          if(aStep->GetPostStepPoint()->GetGlobalTime() / us < 10.)
+          // LOOK HEEEERE
+          if(true)
           {
             if(aStep->GetPostStepPoint()
                  ->GetTouchable()
@@ -210,10 +214,13 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
                  ->GetLogicalVolume()
                  ->GetName() == "Layer_log")
             {
-
+              fEventAction->IncreaseTimePerDetector(
+                detector_number,
+                aStep->GetPostStepPoint()->GetGlobalTime() / us);
               fEventAction->IncreaseEdepPerDetector(
                 detector_number,
                 aStep->GetTotalEnergyDeposit() / eV);
+              /*
               if(fRunAction->getWriteOutAdvancedMultiplicity())
               {
                 if(fEventAction->GetIDListOfGdSiblingParticles().count(
@@ -225,7 +232,7 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
                   fEventAction->IncreaseEdepPerDetector_prompt_woGd(
                     detector_number,
                     aStep->GetTotalEnergyDeposit() / eV);
-              }  // w/ and w/o Gd info (redundant)
+              }*/  // w/ and w/o Gd info (redundant)
             }
             else
               G4cout
@@ -237,6 +244,7 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
                      ->GetName()
                 << G4endl;
           }  // prompt
+          /*
           else
           {
             if(aStep->GetPostStepPoint()->GetGlobalTime() / ms < 1.)
@@ -288,6 +296,7 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
             fEventAction->IncreaseGeEnergyDeposition_after_delayed(
               aStep->GetTotalEnergyDeposit() / eV, whichReentranceTube);
           }  // after delayed
+          */
         }
 
 
@@ -526,13 +535,10 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
         G4String targetName = "XXXX";
         if (target) 
         {
-          fEventAction->Add_NCaptureIsotopes(target->GetName());
-          G4ThreeVector position = aStep->GetPostStepPoint()->GetPosition();
-          fEventAction->Add_NCaptureX(position.getX());
-          fEventAction->Add_NCaptureY(position.getY());
-          fEventAction->Add_NCaptureZ(position.getZ());
-          fEventAction->Add_NCaptureEnergy(aStep->GetTotalEnergyDeposit() / eV);
-          fEventAction->Add_NCaptureTime(aStep->GetPostStepPoint()->GetGlobalTime() / ns);
+          if(target->GetName().find("Gd") != std::string::npos)
+          {
+            fEventAction->Add_NCaptureTime(aStep->GetPostStepPoint()->GetGlobalTime() / us);
+          }
         }
       }
     }
