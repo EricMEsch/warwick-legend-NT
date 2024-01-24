@@ -496,44 +496,24 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
   }
   
   // EDIT: by Eric Esch
-  // Neutron Capture for Neutrontagger
-  G4VProcess* process = const_cast<G4VProcess*>(aStep->GetPostStepPoint()->GetProcessDefinedStep());
+  if(aStep->GetTrack()->GetVolume()->GetName() == "World_phys")
+      return;
   if(aStep->GetTrack()->GetParticleDefinition()->GetParticleName() == "neutron")
   {
-    if(aStep->GetTrack()->GetTrackStatus() == fStopAndKill)
-    { 
-      if(process->GetProcessName() == "biasWrapper(nCapture)" || process->GetProcessName() == "nCapture")
-      {
-        // Check if the process is a biasing wrapper
-        G4BiasingProcessInterface* biasingInterface = dynamic_cast<G4BiasingProcessInterface*>(process);
-        G4HadronicProcess* hproc = nullptr;
-        if(biasingInterface)
-        {
-          // Get the underlying process from the biasing wrapper
-          G4VProcess* underlyingProcess = biasingInterface->GetWrappedProcess();
-          // Check if the underlying process is a hadronic process
-          hproc = dynamic_cast<G4HadronicProcess*>(underlyingProcess);
-        }
-        else
-        {
-          // If it's not a biasing wrapper, check if it's a direct hadronic process
-          hproc = dynamic_cast<G4HadronicProcess*>(process);
-        }
-        //Get Target Isotope name and information
-        const G4Isotope* target = NULL;
-        if (hproc) target = hproc->GetTargetIsotope();
-        G4String targetName = "XXXX";
-        if (target) 
-        {
-          fEventAction->Add_NCaptureIsotopes(target->GetName());
-          G4ThreeVector position = aStep->GetPostStepPoint()->GetPosition();
-          fEventAction->Add_NCaptureX(position.getX());
-          fEventAction->Add_NCaptureY(position.getY());
-          fEventAction->Add_NCaptureZ(position.getZ());
-          fEventAction->Add_NCaptureEnergy(aStep->GetTotalEnergyDeposit() / eV);
-          fEventAction->Add_NCaptureTime(aStep->GetPostStepPoint()->GetGlobalTime() / ns);
-        }
-      }
+    if(aStep->GetPostStepPoint()
+                 ->GetTouchable()
+                 ->GetVolume(0)
+                 ->GetLogicalVolume()
+                 ->GetName() == "PMMA_log" && 
+      aStep->IsFirstStepInVolume())
+    {
+      //fEventAction->Add_NCaptureIsotopes(target->GetName());
+      //G4ThreeVector position = aStep->GetPostStepPoint()->GetPosition();
+      //fEventAction->Add_NCaptureX(position.getX());
+      //fEventAction->Add_NCaptureY(position.getY());
+      //fEventAction->Add_NCaptureZ(position.getZ());
+      fEventAction->Add_NCaptureEnergy(aStep->GetPostStepPoint()->GetKineticEnergy() / keV);
+      //fEventAction->Add_NCaptureTime(aStep->GetPostStepPoint()->GetGlobalTime() / ns);
     }
   }
   

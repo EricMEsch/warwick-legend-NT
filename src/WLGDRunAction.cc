@@ -30,7 +30,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   // Creating ntuple with vector entries
   //
   analysisManager->CreateNtuple("Score", "Hits");
-  analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
+  //analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
 /*
   analysisManager->CreateNtupleIColumn("HitID", fEventAction->GetHitTID());
   analysisManager->CreateNtupleDColumn("Edep", fEventAction->GetHitEdep());
@@ -313,13 +313,13 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   // Neutron Capture for Neutrontagger
   if(fWriteOutNeutronCaptureInfo)
   {
-    analysisManager->CreateNtupleIColumn("NCaptureAmount", fEventAction->GetNCaptureAmount());
-    analysisManager->CreateNtupleSColumn("NCaptureIsotopeNames", fEventAction->GetNCaptureIsotopes());
-    analysisManager->CreateNtupleDColumn("NCaptureX", fEventAction->GetNCaptureX());
-    analysisManager->CreateNtupleDColumn("NCaptureY", fEventAction->GetNCaptureY());
-    analysisManager->CreateNtupleDColumn("NCaptureZ", fEventAction->GetNCaptureZ());
+    //analysisManager->CreateNtupleIColumn("NCaptureAmount", fEventAction->GetNCaptureAmount());
+    //analysisManager->CreateNtupleSColumn("NCaptureIsotopeNames", fEventAction->GetNCaptureIsotopes());
+    //analysisManager->CreateNtupleDColumn("NCaptureX", fEventAction->GetNCaptureX());
+    //analysisManager->CreateNtupleDColumn("NCaptureY", fEventAction->GetNCaptureY());
+    //analysisManager->CreateNtupleDColumn("NCaptureZ", fEventAction->GetNCaptureZ());
     analysisManager->CreateNtupleDColumn("NCaptureEnergy", fEventAction->GetNCaptureEnergy());
-    analysisManager->CreateNtupleDColumn("NCaptureTime", fEventAction->GetNCaptureTime());
+    //analysisManager->CreateNtupleDColumn("NCaptureTime", fEventAction->GetNCaptureTime());
   }
 
   analysisManager->FinishNtuple();
