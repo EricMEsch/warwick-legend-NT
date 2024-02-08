@@ -139,6 +139,11 @@ void WLGDDetectorConstruction::DefineMaterials()
   water->AddMaterial(purewater, 1. - 0.002);
   water->AddMaterial(gadoliniumSulfate, 0.002);
 
+  // For Water Neutron tagger
+  G4Material* GdPMMA = new G4Material("GdLoadedPMMA", 1.18 * g / cm3, 2);
+  GdPMMA->AddMaterial(PMMA, 1. - 0.002);
+  GdPMMA->AddMaterial(gadoliniumSulfate, 0.002);
+
   // enriched Germanium from isotopes
   auto* Ge_74 = new G4Isotope("Ge74", 32, 74, 74.0 * g / mole);
   auto* Ge_76 = new G4Isotope("Ge76", 32, 76, 76.0 * g / mole);
@@ -574,6 +579,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   auto* stdRock       = G4Material::GetMaterial("StdRock");
   auto* roiMat        = G4Material::GetMaterial("enrGe");
   auto* BoratedPETMat = G4Material::GetMaterial("BoratedPET");
+  auto* GdLoadedPMMA = G4Material::GetMaterial("GdLoadedPMMA");
   if(fSetMaterial == "PolyEthylene")
     BoratedPETMat = G4Material::GetMaterial("PolyEthylene");
   if(fSetMaterial == "PMMA")
@@ -714,13 +720,21 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
                                            "Water_phys", fTankLogical, false, 0, true);
 
   //
+  // PMMA around cryostat for Neutrontagger
+  //
+  auto* PMMAsolid =
+    new G4Tubs("PMMA", 0.0 * cm, (cryrad + 5) * cm, (cryhheight + 5) * cm, 0.0, CLHEP::twopi);
+  auto* fPMMALogical  = new G4LogicalVolume(PMMAsolid, GdLoadedPMMA, "PMMA_log");
+  auto* fPMMAPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fPMMALogical,
+                                          "PMMA_phys", fWaterLogical, false, 0, true);
+  //
   // outer cryostat
   //
   auto* coutSolid =
     new G4Tubs("Cout", 0.0 * cm, cryrad * cm, cryhheight * cm, 0.0, CLHEP::twopi);
   auto* fCoutLogical  = new G4LogicalVolume(coutSolid, steelMat, "Cout_log");
   auto* fCoutPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fCoutLogical,
-                                          "Cout_phys", fWaterLogical, false, 0, true);
+                                          "Cout_phys", fPMMALogical, false, 0, true);
 
   //
   // vacuum gap
