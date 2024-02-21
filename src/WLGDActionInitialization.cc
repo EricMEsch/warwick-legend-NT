@@ -20,6 +20,7 @@ void WLGDActionInitialization::BuildForMaster() const
 {
   auto event = new WLGDEventAction;
   SetUserAction(new WLGDRunAction(event, foutname));
+  WLGDPetersGammaCascadeReader::GetInstance();
 }
 
 void WLGDActionInitialization::Build() const
@@ -37,5 +38,4 @@ void WLGDActionInitialization::Build() const
   SetUserAction(new WLGDTrackingAction(event, run));
   SetUserAction(new WLGDSteppingAction(event, run, fDet));
   SetUserAction(new WLGDStackingAction);
-  WLGDPetersGammaCascadeReader::GetInstance();
 }
