@@ -134,8 +134,8 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
              ->GetName() == "Water_log")
         {
           // if(aStep->GetPostStepPoint()->GetGlobalTime() / us < 10.)
-          fEventAction->IncreaseEdepWater_prompt(aStep->GetTotalEnergyDeposit() / eV);
-          fEventAction->IncreaseEdepWater_time(aStep->GetPostStepPoint()->GetGlobalTime() / us);
+          //fEventAction->IncreaseEdepWater_prompt(aStep->GetTotalEnergyDeposit() / eV);
+          //fEventAction->IncreaseEdepWater_time(aStep->GetPostStepPoint()->GetGlobalTime() / us);
           //LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOK HEEEEEEEEEEEERE
           // else if(aStep->GetPostStepPoint()->GetGlobalTime() / ms < 1.)
           // fEventAction->IncreaseEdepWater_delayed(aStep->GetTotalEnergyDeposit() / eV);
@@ -167,8 +167,8 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
           // LOOOK HEEEEERE
           if(true)
           {
-            fEventAction->IncreaseLArTime(aStep->GetPostStepPoint()->GetGlobalTime() / us);
-            fEventAction->IncreaseLArEnergyDeposition(aStep->GetTotalEnergyDeposit() / eV);
+            //fEventAction->IncreaseLArTime(aStep->GetPostStepPoint()->GetGlobalTime() / us);
+            //fEventAction->IncreaseLArEnergyDeposition(aStep->GetTotalEnergyDeposit() / eV);
           }  // prompt
           /*
           else
@@ -235,6 +235,7 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
               }*/  // w/ and w/o Gd info (redundant)
             }
             else
+            {
               G4cout
                 << "Trying to access Layer_log for the prompt multiplicity but it is "
                 << aStep->GetPostStepPoint()
@@ -243,6 +244,8 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
                      ->GetLogicalVolume()
                      ->GetName()
                 << G4endl;
+            }
+              
           }  // prompt
           /*
           else

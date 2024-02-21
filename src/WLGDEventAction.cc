@@ -379,7 +379,6 @@ void WLGDEventAction::EndOfEventAction(const G4Event* event)
   {
     return;  // no action on no hit
   }
-
   // get analysis manager
   auto analysisManager = G4AnalysisManager::Instance();
 
@@ -442,9 +441,6 @@ void WLGDEventAction::EndOfEventAction(const G4Event* event)
     v_NDetector_delayed_onlyGd.push_back(x.first);
     v_EdepPerDetector_delayed_onlyGd.push_back(x.second);
   }
-
-  if(v_EdepWater_prompt[0] > 120e6)
-    v_MuonVeto_flag[0] = 1;
 
   // fill trajectory data if available
   G4TrajectoryContainer* trajectoryContainer = event->GetTrajectoryContainer();
