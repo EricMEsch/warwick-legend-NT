@@ -505,7 +505,11 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
                  ->GetVolume(0)
                  ->GetLogicalVolume()
                  ->GetName() == "PMMA_log" && 
-      aStep->IsFirstStepInVolume())
+      aStep->IsFirstStepInVolume() && aStep->GetPreStepPoint()
+                 ->GetTouchable()
+                 ->GetVolume(0)
+                 ->GetLogicalVolume()
+                 ->GetName() == "Cout_log")
     {
       //fEventAction->Add_NCaptureIsotopes(target->GetName());
       //G4ThreeVector position = aStep->GetPostStepPoint()->GetPosition();
@@ -513,6 +517,7 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
       //fEventAction->Add_NCaptureY(position.getY());
       //fEventAction->Add_NCaptureZ(position.getZ());
       fEventAction->Add_NCaptureEnergy(aStep->GetPostStepPoint()->GetKineticEnergy() / keV);
+      aStep->GetTrack()->SetTrackStatus(fStopAndKill);
       //fEventAction->Add_NCaptureTime(aStep->GetPostStepPoint()->GetGlobalTime() / ns);
     }
   }
