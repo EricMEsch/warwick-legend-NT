@@ -30,6 +30,10 @@
 #include "G4PhysicalConstants.hh"
 #include "G4SystemOfUnits.hh"
 
+#include "G4OpticalSurface.hh"
+#include "G4LogicalBorderSurface.hh"
+#include "G4LogicalSkinSurface.hh"
+
 
 WLGDDetectorConstruction::WLGDDetectorConstruction()
 {
@@ -218,6 +222,30 @@ void WLGDDetectorConstruction::DefineMaterials()
   CombinedArXeHe3->AddElement(eLXe, fXeConc);
 
   G4cout << CombinedArXeHe3 << G4endl;
+
+  // Optical Parameters:
+
+  fenergySmall = { 1.239841939*eV/0.6,1.239841939*eV/0.1 };
+
+  std::vector<G4double> energyAbs = {
+  1.239841939*eV/0.6, 1.239841939*eV/0.55, 1.239841939*eV/0.50, 1.239841939*eV/0.45,  1.239841939*eV/0.40,  
+  1.239841939*eV/0.35, 1.239841939*eV/0.30, 1.239841939*eV/0.25, 1.239841939*eV/0.20, 1.239841939*eV/0.19, 1.239841939*eV/0.1
+  }; 
+
+  std::vector<G4double> rindexWater = {1.33,1.33};
+
+  std::vector<G4double> absH2O =  {
+  10*m, 20*m, 50*m, 100*m,  100*m,  
+  100*m, 90*m, 20*m, 1*m, 0.001*mm, 0.0001*mm // See https://www.researchgate.net/publication/307856024_Ultraviolet_250-550_nm_absorption_spectrum_of_pure_water
+  };
+
+  fOpticalWater = G4Material::GetMaterial("G4_WATER"); 
+
+  G4MaterialPropertiesTable *mptH2O = new G4MaterialPropertiesTable();
+  mptH2O->AddProperty("RINDEX", fenergySmall, rindexWater);
+  mptH2O->AddProperty("ABSLENGTH", energyAbs, absH2O);
+  fOpticalWater->SetMaterialPropertiesTable(mptH2O);
+
 }
 
 void WLGDDetectorConstruction::ConstructSDandField()
@@ -629,6 +657,8 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   G4double vacgap     = 1.0;                   // vacuum gap between walls
   G4double cryrad     = fCryostatOuterRadius;  // 350.0;  // cryostat diam 7 m
   G4double cryhheight = fCryostatHeight;       // 350.0;  // cryostat height 7 m
+  // For Optical foil on scaffolding
+  G4double ScaffoldRadius = cryrad + 80;
 
   if(fGeometryName == "baseline_large_reentrance_tube")
   {
@@ -719,20 +749,70 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   //
   // Water
   //
-  auto* waterSolid     = new G4Tubs("Water", 0.0 * cm, tankrad * cm,
+  auto* OuterWaterSolid     = new G4Tubs("OuterWater_sol", 0.0 * cm, tankrad * cm,
                                     (tankhheight - tankwallbot) * cm, 0.0, CLHEP::twopi);
-  auto* fWaterLogical  = new G4LogicalVolume(waterSolid, waterMat, "Water_log");
-  auto* fWaterPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fWaterLogical,
+  auto* OuterWaterLogical  = new G4LogicalVolume(OuterWaterSolid, waterMat, "OuterWater_log");
+  auto* OuterWaterPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), OuterWaterLogical,
                                            "Water_phys", fTankLogical, false, 0, true);
+
+  //
+  // Seperate outer water volume with reflective foil on Scaffolding from inner optical Water volume
+  //                                         
+  auto* ScaffoldSolid = new G4Tubs("Scaffold_sol", 0.0 * cm, (ScaffoldRadius + 0.1) * cm,
+                                    ScaffoldRadius * cm, 0.0, CLHEP::twopi);
+  auto* ScaffoldLogical  = new G4LogicalVolume(ScaffoldSolid, steelMat, "Scaffold_log");
+  auto* ScaffoldPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), ScaffoldLogical,
+                                         "Scaffold_phys", OuterWaterLogical, false, 0, true);
+  
+  //
+  // Now add inner optical water volume
+  //
+  auto* InnerWaterSolid = new G4Tubs("InnerWater_sol", 0.0 * cm, ScaffoldRadius * cm,
+                                      ScaffoldRadius * cm, 0.0, CLHEP::twopi);
+  auto* InnerWaterLogical  = new G4LogicalVolume(InnerWaterSolid, fOpticalWater, "InnerWater_log");
+  auto* InnerWaterPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), InnerWaterLogical,
+                                           "InnerWater_phys", ScaffoldLogical, false, 0, true);
+
+  //
+  //Place PMTs. 500 PMTs to be exact
+  //
+  G4double PMTradius = 12.7;
+  auto* PMTsolid = new G4Tubs("PMT_sol", 0.0 * cm, PMTradius * cm,
+                                   0.5 * cm, 0.0, CLHEP::twopi); // 10 inch PMTs, just make them as 1cm surface for now
+  auto* PMTLogical = new G4LogicalVolume(PMTsolid, steelMat, "PMT_log");
+
+  G4int PMTperRow = 45;      // For now
+  G4int Rows = 11;           // Current setup. Will probably change
+  G4double VerticalPMTDistance = 50.;
+
+  // Now calculate the transformation and place all the PMTs. This is where the fun begins
+  // First spin the PMT to face x-axis
+  G4Rotate3D rotateY(90*deg, G4ThreeVector(0,1,0));
+  for(G4int j = 0; j < Rows; j++)
+  {
+      for(G4int i = 0; i < PMTperRow; i++)
+      {
+        // Move PMT to the correct radius and z-position
+        G4Translate3D transX(G4ThreeVector((ScaffoldRadius - 1.)*cm,0., 
+                            (-5*(VerticalPMTDistance + PMTradius) + j*(VerticalPMTDistance + PMTradius))*cm));
+        // Rotate PMT position (phi in cylindrical coordinates). Will always face center like this cause whole object is rotated.
+        G4Rotate3D rotateZ(i*(360./(PMTperRow))*deg,G4ThreeVector(0,0,1));
+        G4Transform3D transformPMT = rotateZ * transX * rotateY; // Matrix multiplication from right to left
+        G4String PMTname = std::to_string(j) + "PMT" + std::to_string(i); // Name of PMTs: {row}PMT{column}
+
+        //G4cout << "i: " << i << "j: " << j << "Name: " << PMTname << G4endl;
+        auto* PMTPhysical = new G4PVPlacement(transformPMT, PMTLogical, PMTname, InnerWaterLogical, false, 0, true);
+      }
+  }
 
   //
   // PMMA around cryostat for Neutrontagger
   //
   auto* PMMAsolid =
-    new G4Tubs("PMMA", 0.0 * cm, (cryrad + 5) * cm, (cryhheight + 5) * cm, 0.0, CLHEP::twopi);
+    new G4Tubs("PMMA_sol", 0.0 * cm, (cryrad + 5) * cm, (cryhheight + 5) * cm, 0.0, CLHEP::twopi);
   auto* fPMMALogical  = new G4LogicalVolume(PMMAsolid, GdLoadedPMMA, "PMMA_log");
   auto* fPMMAPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fPMMALogical,
-                                          "PMMA_phys", fWaterLogical, false, 0, true);
+                                          "PMMA_phys", InnerWaterLogical, false, 0, true);
   //
   // outer cryostat
   //
@@ -1178,7 +1258,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   fHallLogical->SetVisAttributes(whiteVisAtt);
   fTankLogical->SetVisAttributes(greyVisAtt);
   //fWaterLogical->SetVisAttributes(testVisAtt);
-  fWaterLogical->SetVisAttributes(testVisAtt_water);
+  OuterWaterLogical->SetVisAttributes(testVisAtt_water);
   fLarLogical->SetVisAttributes(testVisAtt2);
   fCoutLogical->SetVisAttributes(greyVisAtt);
   fCvacLogical->SetVisAttributes(greyVisAtt);
@@ -1195,6 +1275,21 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   fGeLogical->SetVisAttributes(testVisAtt_Ge);
   fBoratedPETLogical_Tube->SetVisAttributes(testVisAtt4);
   fBoratedPETLogical_Box->SetVisAttributes(testVisAtt4);
+
+  // Set Optical Boundaries
+  G4OpticalSurface *OpSurface = new G4OpticalSurface("Teflon");
+  G4LogicalSkinSurface *Surface = new G4LogicalSkinSurface("WaterSurface", InnerWaterLogical, OpSurface);
+  OpSurface->SetType(dielectric_dielectric);
+  OpSurface->SetModel(unified);
+  OpSurface->SetFinish(groundfrontpainted);
+
+  G4MaterialPropertiesTable *SMPT = new G4MaterialPropertiesTable();
+  std::vector<G4double> reflectivity = {0.95,0.95};
+  std::vector<G4double> transmission = {0.,0.};
+  SMPT->AddProperty("REFLECTIVITY", fenergySmall, reflectivity);
+  SMPT->AddProperty("TRANSMITTANCE", fenergySmall, transmission);
+  OpSurface->SetMaterialPropertiesTable(SMPT);
+
   return fWorldPhysical;
 }
 

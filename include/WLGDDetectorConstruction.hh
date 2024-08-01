@@ -121,8 +121,15 @@ private:
   G4int                   fWithWoWater           = 0;
   G4int                   fMaGeMaterial          = 0;
   G4Material*             CombinedArXeHe3;
-  G4Material*             water;
+  G4Material*             water;  //NOTE THAT THIS IS GADOLINIUM LOADED!!
   G4Material*             larMat;
+
+  // For the Optical Parameters
+  std::vector<G4double> fenergySmall;
+  // To reduce computing time:
+  // isolated volumes that do not have detectors inside should not be optical
+  // Therefore create extra optical active water material to discern
+  G4Material*             fOpticalWater;
 };
 
 #endif
