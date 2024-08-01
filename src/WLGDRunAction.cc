@@ -314,7 +314,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   if(fWriteOutNeutronCaptureInfo)
   {
     analysisManager->CreateNtupleIColumn("NCaptureAmount", fEventAction->GetNCaptureAmount());
-    analysisManager->CreateNtupleSColumn("NCaptureIsotopeNames", fEventAction->GetNCaptureIsotopes());
+    analysisManager->CreateNtupleIColumn("NCaptureIsotopeNames", fEventAction->GetNCaptureIsotopes());
     analysisManager->CreateNtupleDColumn("NCaptureX", fEventAction->GetNCaptureX());
     analysisManager->CreateNtupleDColumn("NCaptureY", fEventAction->GetNCaptureY());
     analysisManager->CreateNtupleDColumn("NCaptureZ", fEventAction->GetNCaptureZ());

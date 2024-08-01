@@ -30,6 +30,7 @@
 #include "G4PhysicalConstants.hh"
 #include "G4SystemOfUnits.hh"
 
+
 WLGDDetectorConstruction::WLGDDetectorConstruction()
 {
   DefineCommands();
@@ -139,10 +140,15 @@ void WLGDDetectorConstruction::DefineMaterials()
   water->AddMaterial(purewater, 1. - 0.002);
   water->AddMaterial(gadoliniumSulfate, 0.002);
 
+  G4Material* gadoliniumOxide =
+  new G4Material("GadoliniumOxide", 7.407 * g / cm3, 2);  // Gd2O3
+  gadoliniumOxide->AddElement(elGd, 2);
+  gadoliniumOxide->AddElement(O, 3);
+
   // For Water Neutron tagger
   G4Material* GdPMMA = new G4Material("GdLoadedPMMA", 1.18 * g / cm3, 2);
   GdPMMA->AddMaterial(PMMA, 1. - 0.002);
-  GdPMMA->AddMaterial(gadoliniumSulfate, 0.002);
+  GdPMMA->AddMaterial(gadoliniumOxide, 0.002);
 
   // enriched Germanium from isotopes
   auto* Ge_74 = new G4Isotope("Ge74", 32, 74, 74.0 * g / mole);
@@ -771,11 +777,11 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   auto* fLidLogical = new G4LogicalVolume(lidSolid, steelMat, "Lid_log");
   auto* fLidPhysical =
     new G4PVPlacement(nullptr, G4ThreeVector(0., 0., (cryhheight + cryowall / 2.0) * cm),
-                      fLidLogical, "Lid_phys", fWaterLogical, false, 0, true);
+                      fLidLogical, "Lid_phys", fPMMALogical, false, 0, true);
   auto* fBotLogical = new G4LogicalVolume(lidSolid, steelMat, "Bot_log");
   auto* fBotPhysical =
     new G4PVPlacement(nullptr, G4ThreeVector(0., 0., -(cryhheight + cryowall / 2.0) * cm),
-                      fBotLogical, "Bot_phys", fWaterLogical, false, 0, true);
+                      fBotLogical, "Bot_phys", fPMMALogical, false, 0, true);
 
   //
   // copper tubes, hollow cylinder shell

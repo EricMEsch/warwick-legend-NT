@@ -30,6 +30,7 @@ public:
   void         GetIndividualDepositionInfo(G4int answer);
   void         AllowForLongTimeEmissionReadout(G4int answer);
   void         DefineCommands();
+  void         OutputCaptureIntegerFromName(G4String targetName);
 
 private:
   WLGDRunAction*            fRunAction;

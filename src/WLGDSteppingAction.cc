@@ -525,7 +525,8 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
         G4String targetName = "XXXX";
         if (target) 
         {
-          fEventAction->Add_NCaptureIsotopes(target->GetName());
+          targetName = target->GetName() + "_" + aStep->GetPostStepPoint()->GetTouchableHandle()->GetVolume()->GetLogicalVolume()->GetName();
+          OutputCaptureIntegerFromName(targetName);
           G4ThreeVector position = aStep->GetPostStepPoint()->GetPosition();
           fEventAction->Add_NCaptureX(position.getX());
           fEventAction->Add_NCaptureY(position.getY());
@@ -538,6 +539,67 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
   }
   
 
+}
+
+//Convert the name of the capture Isotope to an Integer.
+// 0 Means capture on Water within the Water Volume
+// 1 Means capture on H1 within the PMMA Volume
+// 2 Means capture on Gd155 (or other isotopes except 157 which are very very rare) (within the PMMA Volume)
+// 3 Means capture on Gd157
+// 4 Means capture on Argon
+// 5 Means capture on H in Moderator Volume
+// 6 Means capture on Steel (Cryostat etc)
+// 7 Means capture on Germanium
+// 8 Means capture on anything else (Copper, Rock...)
+void WLGDSteppingAction::OutputCaptureIntegerFromName(G4String targetName)
+{
+  G4String delimiter = "_";
+  size_t pos =targetName.find(delimiter);
+  const auto& token = targetName.substr(0, pos);
+  targetName.erase(0,pos + delimiter.length());
+  if(token == "H1" || token == "O16")
+  {
+    if(targetName == "Water_log")
+    {
+        fEventAction->Add_NCaptureIsotopes(0);
+    }
+    else if(targetName == "PMMA_log")
+    {
+        fEventAction->Add_NCaptureIsotopes(1);
+    }
+    else if(targetName == "BoratedPET_Logical")
+    {
+        fEventAction->Add_NCaptureIsotopes(5);
+    }
+    else
+    {
+        fEventAction->Add_NCaptureIsotopes(8);
+    } 
+  }
+  else if((token == "Gd154" || token == "Gd155") || (token == "Gd156" || token == "Gd158") || (token == "Gd160"))
+  {
+    fEventAction->Add_NCaptureIsotopes(2);
+  }
+  else if(token == "Gd157")
+  {
+    fEventAction->Add_NCaptureIsotopes(3);
+  }
+  else if((token.find("Ar") != string::npos))
+  {
+    fEventAction->Add_NCaptureIsotopes(4);
+  }
+  else if((token.find("Fe") != string::npos)  || (token.find("Cr") != string::npos) || (token.find("Ni") != string::npos) )
+  {
+    fEventAction->Add_NCaptureIsotopes(6);
+  }
+  else if(token.find("Ge") != string::npos)
+  {
+    fEventAction->Add_NCaptureIsotopes(7);
+  }
+  else 
+  {
+    fEventAction->Add_NCaptureIsotopes(8);
+  }
 }
 
 void WLGDSteppingAction::GetDepositionInfo(G4int answer) { fDepositionInfo = answer; }

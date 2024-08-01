@@ -550,7 +550,7 @@ public:
 
   // Getters and setter for Neutron Capture
   // For Neutron tagger
-  void Add_NCaptureIsotopes(G4String name)
+  void Add_NCaptureIsotopes(G4int name)
   {
     NCaptureIsotopes.push_back(name);
   }
@@ -585,7 +585,7 @@ public:
     NCaptureAmount.push_back(NCaptureIsotopes.size());
     return NCaptureAmount; 
   }
-  std::vector<std::string>&    GetNCaptureIsotopes() { return NCaptureIsotopes; }
+  std::vector<G4int>&    GetNCaptureIsotopes() { return NCaptureIsotopes; }
   std::vector<G4double>&    GetNCaptureX() { return NCaptureX; }
   std::vector<G4double>&    GetNCaptureY() { return NCaptureY; }
   std::vector<G4double>&    GetNCaptureZ() { return NCaptureZ; }
@@ -885,7 +885,7 @@ private:
   // EDIT: by Eric Esch
   // Neutron Capture for Neutrontagger
   std::vector<G4int>    NCaptureAmount;
-  std::vector<std::string> NCaptureIsotopes;
+  std::vector<G4int> NCaptureIsotopes;
   std::vector<G4double> NCaptureX;
   std::vector<G4double> NCaptureY;
   std::vector<G4double> NCaptureZ;
