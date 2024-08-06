@@ -239,7 +239,9 @@ void WLGDDetectorConstruction::DefineMaterials()
   100*m, 90*m, 20*m, 1*m, 0.001*mm, 0.0001*mm // See https://www.researchgate.net/publication/307856024_Ultraviolet_250-550_nm_absorption_spectrum_of_pure_water
   };
 
-  fOpticalWater = G4Material::GetMaterial("G4_WATER"); 
+  fOpticalWater = new G4Material("WaterWithOptical", 1.0*g/cm3, 2);
+  fOpticalWater->AddElement(nistManager->FindOrBuildElement("H"), 2);
+  fOpticalWater->AddElement(nistManager->FindOrBuildElement("O"), 1);
 
   G4MaterialPropertiesTable *mptH2O = new G4MaterialPropertiesTable();
   mptH2O->AddProperty("RINDEX", fenergySmall, rindexWater);
