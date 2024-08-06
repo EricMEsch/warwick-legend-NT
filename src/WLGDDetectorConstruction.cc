@@ -1283,6 +1283,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   G4OpticalSurface *OpSurface = new G4OpticalSurface("Teflon");
   G4LogicalBorderSurface *FoilCloseToCryostat = new G4LogicalBorderSurface("FoilCloseToCryostat", InnerWaterPhysical, fPMMAPhysical , OpSurface);
   G4LogicalBorderSurface *FoilFarFromCryostat = new G4LogicalBorderSurface("FoilFarFromCryostat", InnerWaterPhysical, ScaffoldPhysical , OpSurface);
+  G4LogicalBorderSurface *FoilTopBottom = new G4LogicalBorderSurface("FoilTopBottom", InnerWaterPhysical, OuterWaterPhysical , OpSurface);
   OpSurface->SetType(dielectric_dielectric);
   OpSurface->SetModel(unified);
   OpSurface->SetFinish(groundfrontpainted);
