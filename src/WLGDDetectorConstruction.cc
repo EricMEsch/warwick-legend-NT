@@ -798,9 +798,10 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
         // Rotate PMT position (phi in cylindrical coordinates). Will always face center like this cause whole object is rotated.
         G4Rotate3D rotateZ(i*(360./(PMTperRow))*deg,G4ThreeVector(0,0,1));
         G4Transform3D transformPMT = rotateZ * transX * rotateY; // Matrix multiplication from right to left
-        G4String PMTname = std::to_string(j) + "PMT" + std::to_string(i); // Name of PMTs: {row}PMT{column}
+        G4int DetectorNumber = (j+1) * 1000 + (i+1); // Detectornumber in the format of row column e.g. (1003) row 1 column 3
+        G4String PMTname =  "PMT" + std::to_string(DetectorNumber);
 
-        //G4cout << "i: " << i << "j: " << j << "Name: " << PMTname << G4endl;
+        G4cout << "i: " << i << "j: " << j << "Name: " << PMTname << G4endl;
         auto* PMTPhysical = new G4PVPlacement(transformPMT, PMTLogical, PMTname, InnerWaterLogical, false, 0, true);
       }
   }
@@ -1278,7 +1279,8 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 
   // Set Optical Boundaries
   G4OpticalSurface *OpSurface = new G4OpticalSurface("Teflon");
-  G4LogicalSkinSurface *Surface = new G4LogicalSkinSurface("WaterSurface", InnerWaterLogical, OpSurface);
+  G4LogicalBorderSurface *FoilCloseToCryostat = new G4LogicalBorderSurface("FoilCloseToCryostat", InnerWaterPhysical, fPMMAPhysical , OpSurface);
+  G4LogicalBorderSurface *FoilFarFromCryostat = new G4LogicalBorderSurface("FoilFarFromCryostat", InnerWaterPhysical, ScaffoldPhysical , OpSurface);
   OpSurface->SetType(dielectric_dielectric);
   OpSurface->SetModel(unified);
   OpSurface->SetFinish(groundfrontpainted);
