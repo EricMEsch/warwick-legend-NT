@@ -781,7 +781,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   G4double PMTradius = 12.7;
   auto* PMTsolid = new G4Tubs("PMT_sol", 0.0 * cm, PMTradius * cm,
                                    0.5 * cm, 0.0, CLHEP::twopi); // 10 inch PMTs, just make them as 1cm surface for now
-  auto* PMTLogical = new G4LogicalVolume(PMTsolid, steelMat, "PMT_log");
+  auto* PMTLogical = new G4LogicalVolume(PMTsolid, fOpticalWater, "PMT_log");
 
   G4int PMTperRow = 45;      // For now
   G4int Rows = 11;           // Current setup. Will probably change
@@ -1281,7 +1281,9 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 
   // Set Optical Boundaries
   G4OpticalSurface *OpSurface = new G4OpticalSurface("Teflon");
-  G4LogicalSkinSurface *Surface = new G4LogicalSkinSurface("WaterSurface", InnerWaterLogical, OpSurface);
+  G4LogicalBorderSurface *FoilCloseToCryostat = new G4LogicalBorderSurface("FoilCloseToCryostat", InnerWaterPhysical, fPMMAPhysical , OpSurface);
+  G4LogicalBorderSurface *FoilFarFromCryostat = new G4LogicalBorderSurface("FoilFarFromCryostat", InnerWaterPhysical, ScaffoldPhysical , OpSurface);
+  G4LogicalBorderSurface *FoilTopBottom = new G4LogicalBorderSurface("FoilTopBottom", InnerWaterPhysical, OuterWaterPhysical , OpSurface);
   OpSurface->SetType(dielectric_dielectric);
   OpSurface->SetModel(unified);
   OpSurface->SetFinish(groundfrontpainted);
